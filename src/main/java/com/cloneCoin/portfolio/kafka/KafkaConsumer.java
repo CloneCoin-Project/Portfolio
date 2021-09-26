@@ -31,21 +31,22 @@ public class KafkaConsumer {
 
     // postman 으로 topic, message 를 전달하면 produce 해주는 서버를 하나 만들자.
 
-     @KafkaListener(topics = "quickstart-events")
+     @KafkaListener(topics = "quickstart_events")
      public void createPortfolio(String kafkaMessage) {
         log.info("Kafka message: =====> " + kafkaMessage);
 
-        Map<Object,Object> map = new HashMap<>();
+        Map<Object,Long> map = new HashMap<>();
         ObjectMapper mapper = new ObjectMapper();
         try {
-            map = mapper.readValue(kafkaMessage, new TypeReference<Map<Object, Object>>() {
+            map = mapper.readValue(kafkaMessage, new TypeReference<Map<Object, Long>>() {
             });
 
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
 
-        log.info("(String)map.get : " + map.get("userId"));
-        portfolioService.createPortfolio((String)map.get("userId"));
+        log.info("(Long)map.get : " + map.get("userId"));
+        System.out.println(map.get("userId"));
+        portfolioService.createPortfolio(map.get("userId"));
     }
 }
