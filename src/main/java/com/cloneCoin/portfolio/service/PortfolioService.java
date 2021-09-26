@@ -1,7 +1,6 @@
 package com.cloneCoin.portfolio.service;
 
 import com.cloneCoin.portfolio.dto.PortfolioDto;
-import com.cloneCoin.portfolio.jpa.PortfolioEntity;
 
 public interface PortfolioService {
 

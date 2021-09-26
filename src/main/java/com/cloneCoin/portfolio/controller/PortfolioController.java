@@ -1,18 +1,14 @@
 package com.cloneCoin.portfolio.controller;
 
 import com.cloneCoin.portfolio.dto.PortfolioDto;
-import com.cloneCoin.portfolio.jpa.PortfolioEntity;
 import com.cloneCoin.portfolio.service.PortfolioService;
 import com.cloneCoin.portfolio.vo.ResponsePortfolio;
-import com.netflix.discovery.converters.Auto;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.Path;
 
 @RestController
 @RequestMapping("/portfolio/")

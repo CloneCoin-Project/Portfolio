@@ -1,14 +1,12 @@
 package com.cloneCoin.portfolio.kafka;
 
-import com.cloneCoin.portfolio.jpa.PortfolioEntity;
-import com.cloneCoin.portfolio.jpa.PortfolioRepository;
+import com.cloneCoin.portfolio.repository.PortfolioRepository;
 import com.cloneCoin.portfolio.service.PortfolioService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.kafka.annotation.KafkaHandler;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
@@ -16,7 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 // REST TEMPLETE
-// feign : API (비동기)
+// feign : API (동기)
 
 @Service
 @Slf4j

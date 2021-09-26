@@ -1,4 +1,4 @@
-package com.cloneCoin.portfolio.jpa;
+package com.cloneCoin.portfolio.domain;
 
 import lombok.Data;
 

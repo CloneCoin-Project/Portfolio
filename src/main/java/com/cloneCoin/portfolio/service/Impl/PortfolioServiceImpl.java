@@ -1,8 +1,8 @@
 package com.cloneCoin.portfolio.service.Impl;
 
 import com.cloneCoin.portfolio.dto.PortfolioDto;
-import com.cloneCoin.portfolio.jpa.PortfolioEntity;
-import com.cloneCoin.portfolio.jpa.PortfolioRepository;
+import com.cloneCoin.portfolio.domain.PortfolioEntity;
+import com.cloneCoin.portfolio.repository.PortfolioRepository;
 import com.cloneCoin.portfolio.service.PortfolioService;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
