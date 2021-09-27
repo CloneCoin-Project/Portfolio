@@ -2,6 +2,7 @@ package com.cloneCoin.portfolio.domain;
 
 import lombok.Data;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.*;
@@ -10,7 +11,8 @@ import java.io.Serializable;
 @Getter
 @Entity
 @Table(name="portfolio")
-public class Portfolio implements Serializable {
+@NoArgsConstructor
+public class Portfolio{
     // What is Serializable ?
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -24,9 +26,10 @@ public class Portfolio implements Serializable {
 
     private Long balance;
 
-    public Portfolio(Long userId, Long portfolioProfit) {
+    public Portfolio(Long userId, Long portfolioProfit, Long balance) {
         this.userId = userId;
         this.portfolioProfit = portfolioProfit;
+        this.balance = balance;
     }
 
     public Long UpdateBalance(Long amount){

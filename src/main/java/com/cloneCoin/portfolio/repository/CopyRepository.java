@@ -10,4 +10,8 @@ import java.util.List;
 public interface CopyRepository extends CrudRepository<Copy, Long> {
 
     List<Copy> findByPortfolioId(Long portfolioId);
+
+    Copy findByUserIdAndLeaderId(Long userid, Long leaderId);
+
+    List<Copy> findByLeaderId(Long leaderId);
 }

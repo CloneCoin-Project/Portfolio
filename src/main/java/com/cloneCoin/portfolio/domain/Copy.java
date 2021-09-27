@@ -1,32 +1,37 @@
 package com.cloneCoin.portfolio.domain;
 
-import com.cloneCoin.portfolio.dto.CopyRequestDto;
+import com.cloneCoin.portfolio.dto.CopyStartRequestDto;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
+import javax.persistence.*;
 import java.util.Date;
 
 @Entity
 @Getter
+@NoArgsConstructor
 public class Copy {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private Long userId;
     private Long leaderId;
-    private Date registerDate;
+    //private Date registerDate;
     private Long totalInvestAmout;
-    private Long copyProfit;
+    //private Long copyProfit;
 
     @ManyToOne
     @JoinColumn(name = "PORTFOLIO_ID")
     private Portfolio portfolio;
 
-    public Copy(CopyRequestDto copyRequestDto) {
-        this.userId = copyRequestDto.getUserid();
-        this.leaderId = copyRequestDto.getLeaderId();
-        this.totalInvestAmout = copyRequestDto.getAmount();
+    public Copy(CopyStartRequestDto copyStartRequestDto, Portfolio portfolio) {
+        this.userId = copyStartRequestDto.getUserId();
+        this.leaderId = copyStartRequestDto.getLeaderId();
+        this.totalInvestAmout = copyStartRequestDto.getAmount();
+        this.portfolio = portfolio;
+    }
+
+    public void UpdateInvest(Long amount) {
+        this.totalInvestAmout += amount;
     }
 }

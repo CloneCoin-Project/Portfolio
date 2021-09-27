@@ -31,7 +31,7 @@ public class KafkaConsumer {
 
     // postman 으로 topic, message 를 전달하면 produce 해주는 서버를 하나 만들자.
 
-     @KafkaListener(topics = "quickstart_events")
+     @KafkaListener(topics = "transaction") // quickstart_events
      public void createPortfolio(String kafkaMessage) {
         log.info("Kafka message: =====> " + kafkaMessage);
 
@@ -48,5 +48,23 @@ public class KafkaConsumer {
         log.info("(Long)map.get : " + map.get("userId"));
         System.out.println(map.get("userId"));
         portfolioService.createPortfolio(map.get("userId"));
+    }
+
+    // 매수,매도 analysis에서 받기
+    @KafkaListener(topics = "transactions")
+    public void analysisEvent(String kafkaMessage){
+
+        Map<Object, Object> map = new HashMap<>();
+        ObjectMapper mapper = new ObjectMapper();
+
+        try {
+            map = mapper.readValue(kafkaMessage, new TypeReference<Map<Object, Object>>() {
+            });
+
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+
+        portfolioService.UpdatePortfolio((Long)map.get("leaderId") ,map.get("before"), map.get("after"));
     }
 }

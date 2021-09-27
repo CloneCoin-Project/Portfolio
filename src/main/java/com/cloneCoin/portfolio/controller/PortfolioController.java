@@ -1,8 +1,6 @@
 package com.cloneCoin.portfolio.controller;
 
-import com.cloneCoin.portfolio.dto.CopyRequestDto;
 import com.cloneCoin.portfolio.dto.PortfolioDto;
-import com.cloneCoin.portfolio.service.CopyService;
 import com.cloneCoin.portfolio.service.PortfolioService;
 import com.cloneCoin.portfolio.vo.ResponsePortfolio;
 import lombok.RequiredArgsConstructor;
@@ -15,10 +13,10 @@ import javax.servlet.http.HttpServletRequest;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/portfolio/")
+@RequestMapping("/portfolio")
 public class PortfolioController {
     private final PortfolioService portfolioService;
-    private final CopyService copyService;
+
 
     @GetMapping("/welcome")
     public String welcome() {
@@ -30,7 +28,7 @@ public class PortfolioController {
         return String.format("Portfolio server is working %s", request.getServerPort());
     }
 
-    @GetMapping("/portfolio/{userId}")
+    @GetMapping("/{userId}")
     public ResponseEntity<ResponsePortfolio> getPortfolio(@PathVariable("userId") Long userId) {
 
         PortfolioDto portfolioDto = portfolioService.getPortfolioByUserId(userId);
@@ -40,8 +38,5 @@ public class PortfolioController {
         return ResponseEntity.status(HttpStatus.OK).body(responsePortfolio);
     }
 
-    @PostMapping("/portfolio/copy")
-    public void copyStart(@RequestBody CopyRequestDto copyRequestDto){
-        copyService.createCopy(copyRequestDto);
-    }
+
 }
