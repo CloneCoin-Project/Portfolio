@@ -17,7 +17,7 @@ public class Copy {
     private Long userId;
     private Long leaderId;
     //private Date registerDate;
-    private Long totalInvestAmout;
+    private Double totalInvestAmout;
     //private Long copyProfit;
 
     @ManyToOne

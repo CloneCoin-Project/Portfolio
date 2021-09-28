@@ -38,7 +38,7 @@ public class CopyServiceImpl implements CopyService {
         // 총 금액이랑 카피할 돈 비교해서 총금액보다 크다면 카피 불가
 
         // 카피 후 포트폴리오 에서 금액 차감
-        Long balance = portfolio.MinusBalance(copyStartRequestDto.getAmount()); // 카피 후 잔액
+        Double balance = portfolio.MinusBalance(copyStartRequestDto.getAmount()); // 카피 후 잔액
 
         // 카피 한 코인 생성
         // 페인 사용
@@ -70,7 +70,7 @@ public class CopyServiceImpl implements CopyService {
 
             Portfolio portfolio = portfolioRepository.findByUserId(copyList.get(i).getUserId());
             // 카피삭제시 투자했던 돈 반환
-            Long returnMoney = copyList.get(i).getTotalInvestAmout();
+            Double returnMoney = copyList.get(i).getTotalInvestAmout();
 
             // 삭제완료시 돈 반환
             copyRepository.delete(copyList.get(i));

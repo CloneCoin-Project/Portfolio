@@ -6,5 +6,5 @@ import lombok.Getter;
 public class CopyStartRequestDto {
     private Long userId;
     private Long leaderId;
-    private Long amount;
+    private Double amount;
 }

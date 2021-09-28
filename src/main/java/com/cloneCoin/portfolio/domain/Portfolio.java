@@ -24,20 +24,20 @@ public class Portfolio{
     @Column
     private Long portfolioProfit;
 
-    private Long balance;
+    private Double balance;
 
-    public Portfolio(Long userId, Long portfolioProfit, Long balance) {
+    public Portfolio(Long userId, Long portfolioProfit, Double balance) {
         this.userId = userId;
         this.portfolioProfit = portfolioProfit;
         this.balance = balance;
     }
 
-    public Long PlusBalance(Long amount){
+    public Double PlusBalance(Double amount){
         this.balance += amount;
         return balance;
     }
 
-    public Long MinusBalance(Long amount){
+    public Double MinusBalance(Double amount){
         this.balance -= amount;
         return balance;
     }
