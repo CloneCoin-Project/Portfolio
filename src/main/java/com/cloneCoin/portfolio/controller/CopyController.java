@@ -1,5 +1,6 @@
 package com.cloneCoin.portfolio.controller;
 
+import com.cloneCoin.portfolio.dto.CopyDeleteRequestDto;
 import com.cloneCoin.portfolio.dto.CopyPutRequestDto;
 import com.cloneCoin.portfolio.dto.CopyStartRequestDto;
 import com.cloneCoin.portfolio.service.CopyService;
@@ -21,5 +22,10 @@ public class CopyController {
     @PutMapping("/copy")
     public void copyPut(@RequestBody CopyPutRequestDto copyPutRequestDto){
         copyService.copyPut(copyPutRequestDto);
+    }
+
+    @DeleteMapping("/copy")
+    public void copyDelete(CopyDeleteRequestDto copyDeleteRequestDto){
+        copyService.copyDelete(copyDeleteRequestDto);
     }
 }

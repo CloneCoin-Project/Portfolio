@@ -2,6 +2,7 @@ package com.cloneCoin.portfolio.service.Impl;
 
 import com.cloneCoin.portfolio.client.WalletReadServiceClient;
 import com.cloneCoin.portfolio.domain.Copy;
+import com.cloneCoin.portfolio.dto.BuySellDto;
 import com.cloneCoin.portfolio.dto.PortfolioDto;
 import com.cloneCoin.portfolio.domain.Portfolio;
 import com.cloneCoin.portfolio.dto.WalletDto;
@@ -32,7 +33,7 @@ public class PortfolioServiceImpl implements PortfolioService {
     @Override
     public void createPortfolio(Long userId) {
         System.out.println("createPorfoilo called!");
-        Portfolio portfolio = new Portfolio(userId, 0L, 0L);
+        Portfolio portfolio = new Portfolio(userId, 0L, 10000L);
 
         System.out.println("Repository save called!");
         portfolioRepository.save(portfolio);
@@ -59,16 +60,15 @@ public class PortfolioServiceImpl implements PortfolioService {
             walletDtoList.add(walletDto);
         }
 
-        // throw new exception 처리하자.
         PortfolioDto portfolioDto = new PortfolioDto(portfolio, walletDtoList);
         return portfolioDto;
     }
 
     // analysis 매수, 매도 이벤트 발생시
     @Override
-    public void UpdatePortfolio(Long leaderId, Object before, Object after) {
+    public void UpdatePortfolio(BuySellDto buySellDto) {
         // 카프카로 받은 leaderId가 copy에 존재한지 찾기
-        List<Copy> copyList = copyRepository.findByLeaderId(leaderId);
+        List<Copy> copyList = copyRepository.findByLeaderId(buySellDto.getLeaderId());
 
         // userId 담을 리스트
         List<Long> userList = new ArrayList<>();
@@ -84,12 +84,13 @@ public class PortfolioServiceImpl implements PortfolioService {
             System.out.println(userList.get(i));
         }
 
-        // 카프카로 리스트 넘어오는거 어캐받지?
         // 리더가 얼마큼 변했는지 비율 계산
         //before (List coins(name, amount, avgPrice), totalKRW) amount(수량) * avgPrice(평단가) / totalKRW => 비율
         //after (List coins(name, amount, avgPrice), totalKRW) amount(수량) * avgPrice(평단가) / totalKRW => 비율
         // 비율이 얼마나 달라졌는지에 따라 포트폴리오 코인 매수매도 진행
 
         // 변한 비율만큼 userList 매수, 매도 진행
+
+        // 포트폴리오 총 수익률 변경
     }
 }

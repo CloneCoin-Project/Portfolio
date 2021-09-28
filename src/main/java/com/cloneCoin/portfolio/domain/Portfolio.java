@@ -32,7 +32,12 @@ public class Portfolio{
         this.balance = balance;
     }
 
-    public Long UpdateBalance(Long amount){
+    public Long PlusBalance(Long amount){
+        this.balance += amount;
+        return balance;
+    }
+
+    public Long MinusBalance(Long amount){
         this.balance -= amount;
         return balance;
     }

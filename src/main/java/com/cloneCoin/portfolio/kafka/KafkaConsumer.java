@@ -1,16 +1,24 @@
 package com.cloneCoin.portfolio.kafka;
 
+import com.cloneCoin.portfolio.dto.BuySellDto;
+import com.cloneCoin.portfolio.dto.CoinDto;
 import com.cloneCoin.portfolio.repository.PortfolioRepository;
 import com.cloneCoin.portfolio.service.PortfolioService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.tomcat.util.json.JSONParser;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.json.JsonParser;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 // REST TEMPLETE
@@ -65,6 +73,55 @@ public class KafkaConsumer {
             e.printStackTrace();
         }
 
-        portfolioService.UpdatePortfolio((Long)map.get("leaderId") ,map.get("before"), map.get("after"));
+        // 전체받아오기
+        JSONObject rjson = new JSONObject(kafkaMessage);
+
+        // leaderId
+        Long leaderId = rjson.getLong("leaderId");
+
+        // before 부분
+        JSONObject jsonBefore = rjson.getJSONObject("before");
+
+        // before안에 totalKRW
+        Double beforeTotalKRW = jsonBefore.getDouble("totalKRW");
+
+        // before안에 coins array
+        JSONArray jsonBeforeCoins = jsonBefore.getJSONArray("coins");
+
+        List<CoinDto> beforeCoinDtoList = new ArrayList<>();
+        for(int i=0; i<jsonBeforeCoins.length(); i++){
+            JSONObject coinJson = jsonBeforeCoins.getJSONObject(i);
+            String name = coinJson.getString("name");
+            Double coinQuantity = coinJson.getDouble("coinQuantity");
+            Double avgPrice = coinJson.getDouble("avgPrice");
+            CoinDto coinDto = new CoinDto(name, coinQuantity, avgPrice);
+            beforeCoinDtoList.add(coinDto);
+        }
+
+        // after 부분
+        JSONObject jsonAfter = rjson.getJSONObject("after");
+
+        // after안에 totalKRW
+        Double afterTotalKRW = jsonAfter.getDouble("totalKRW");
+
+        // after안에 coins array
+        JSONArray jsonAfterCoins = jsonAfter.getJSONArray("coins");
+
+        List<CoinDto> afterCoinDtoList = new ArrayList<>();
+        for(int i=0; i<jsonAfterCoins.length(); i++){
+
+            JSONObject coinJson = jsonAfterCoins.getJSONObject(i);
+            String name = coinJson.getString("name");
+            Double coinQuantity = coinJson.getDouble("coinQuantity");
+            Double avgPrice = coinJson.getDouble("avgPrice");
+            CoinDto coinDto = new CoinDto(name, coinQuantity, avgPrice);
+            afterCoinDtoList.add(coinDto);
+        }
+
+        BuySellDto buySellDto = new BuySellDto(leaderId, beforeCoinDtoList, afterCoinDtoList, beforeTotalKRW, afterTotalKRW);
+
+
+
+        portfolioService.UpdatePortfolio(buySellDto);
     }
 }
