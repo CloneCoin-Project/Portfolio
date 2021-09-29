@@ -1,13 +1,12 @@
 package com.cloneCoin.portfolio.service.Impl;
 
+import com.cloneCoin.portfolio.client.BithumbOpenApi;
+import com.cloneCoin.portfolio.client.BithumbServiceClient;
 import com.cloneCoin.portfolio.client.WalletReadServiceClient;
 import com.cloneCoin.portfolio.domain.Coin;
 import com.cloneCoin.portfolio.domain.Copy;
-import com.cloneCoin.portfolio.dto.BuySellDto;
-import com.cloneCoin.portfolio.dto.CoinDto;
-import com.cloneCoin.portfolio.dto.PortfolioDto;
+import com.cloneCoin.portfolio.dto.*;
 import com.cloneCoin.portfolio.domain.Portfolio;
-import com.cloneCoin.portfolio.dto.WalletDto;
 import com.cloneCoin.portfolio.repository.CoinRepository;
 import com.cloneCoin.portfolio.repository.CopyRepository;
 import com.cloneCoin.portfolio.repository.PortfolioRepository;
@@ -33,6 +32,8 @@ public class PortfolioServiceImpl implements PortfolioService {
     private final CopyRepository copyRepository;
     private final WalletReadServiceClient walletReadServiceClient;
     private final CoinRepository coinRepository;
+    private final BithumbServiceClient bithumbServiceClient;
+    private final BithumbOpenApi bithumbOpenApi;
 
     // 포트폴리오 생성
     @Override
@@ -42,6 +43,11 @@ public class PortfolioServiceImpl implements PortfolioService {
 
         System.out.println("Repository save called!");
         portfolioRepository.save(portfolio);
+
+
+//        TickerDto tickerDto = bithumbServiceClient.getTiker("BTC", "KRW");
+//        System.out.println(tickerDto.getClosing_price());
+
 
         //PortfolioDto portfolioDto = new ModelMapper().map(portfolio, PortfolioDto.class); modelmapper 사용시 setter 필요
 
@@ -99,8 +105,15 @@ public class PortfolioServiceImpl implements PortfolioService {
             Double afterKRW = buySellDto.getAfterKRW();
             Double afterRatio = 0.0;
 
+            // 카프카로 넘어온 코인 매수매도 for문
             for(int i=0; i <= beforeCoins.size(); i++){
+
                 String coinName = beforeCoins.get(i).getName();
+
+                // 코인에 현재가
+                Double currentPrice = bithumbOpenApi.TickerApi(coinName);
+                System.out.println(currentPrice);
+
                 // before
                 Double beforeQuantity = beforeCoins.get(i).getCoinQuantity();
                 Double beforeAvgPrice = beforeCoins.get(i).getAvgPrice();
@@ -112,7 +125,7 @@ public class PortfolioServiceImpl implements PortfolioService {
                 afterRatio = (afterQuantity * afterAvgPrice) / beforeKRW;
 
                 // 수량이 다를경우 매수 또는 매도 발생
-                if(!beforeQuantity.equals(afterQuantity)){
+                if(!(beforeQuantity.equals(afterQuantity)) || !(beforeAvgPrice.equals(afterAvgPrice))){
                     // 매도 발생
                     if(beforeQuantity > afterQuantity){
                         Double resultRatio = beforeRatio - afterRatio;
@@ -130,9 +143,10 @@ public class PortfolioServiceImpl implements PortfolioService {
                                 Double sellQuantity = coin.getQuantity() * (resultRatio / 100);
                                 coin.UpdateSellQuantity(sellQuantity);
 
+
                                 // 매도하면 user balance는 증가해야함
                                 // 매도할때 현재가로 팔아야 하잖음 현재가 어캐 구하지?
-                                Double sellBalance = sellQuantity * (현재가)
+                                Double sellBalance = sellQuantity * currentPrice; //(현재가)
                                 portfolio.PlusBalance(sellBalance);
                            }
                         }
@@ -154,11 +168,11 @@ public class PortfolioServiceImpl implements PortfolioService {
                                 Double buyKRW = portfolio.getBalance() * (resultRatio / 100);
 
                                 // 소수점으로 계산하더라도 나머지가 있을 수 있는데 어떻게하지? => 코인을 사고 팔기만해도 돈이 달라질 수 있다.
-                                Double buyQuantity = buyKRW / (현재가);
+                                Double buyQuantity = buyKRW / currentPrice;// (현재가);
 
                                 // 코인 생성
                                 // 코인 처음살때는 현재가가 평단가 이다.
-                                Coin newCoin = new Coin(userList.get(j), buySellDto.getLeaderId(), coinName, buyQuantity, 현재가);
+                                Coin newCoin = new Coin(userList.get(j), buySellDto.getLeaderId(), coinName, buyQuantity, currentPrice); // 현재가
 
                                 // 코인 샀으면 balance에서 빼줘야함
                                 portfolio.MinusBalance(buyKRW);
@@ -172,7 +186,7 @@ public class PortfolioServiceImpl implements PortfolioService {
                                 Double buyKRW = portfolio.getBalance() * (resultRatio / 100);
 
                                 // 소수점으로 계산하더라도 나머지가 있을 수 있는데 어떻게하지? => 코인을 사고 팔기만해도 돈이 달라질 수 있다.
-                                Double buyQuantity = buyKRW / (현재가);
+                                Double buyQuantity = buyKRW / currentPrice;//(현재가);
 
                                 Coin oldCoin = coinRepository.findByCoinName(coinName);
 
@@ -180,7 +194,7 @@ public class PortfolioServiceImpl implements PortfolioService {
                                 Double totalQuantity = oldCoin.getQuantity() + buyQuantity;
 
                                 Double oldMoney = oldCoin.getQuantity() * oldCoin.getAvgPrice();
-                                Double newMoney = buyQuantity * (현재가);
+                                Double newMoney = buyQuantity * currentPrice;//(현재가);
 
                                 // 평단가 계산식 => 총사용한 돈 / 총 수량
                                 Double totalAvgPrice = oldMoney + newMoney / totalQuantity;
@@ -197,6 +211,7 @@ public class PortfolioServiceImpl implements PortfolioService {
                 }
             }
 
+            // 카프카로 넘어온 모든 코인 매수매도 끝나면 portfolio 총 수익률 변경해줘야함
 
 
         }
