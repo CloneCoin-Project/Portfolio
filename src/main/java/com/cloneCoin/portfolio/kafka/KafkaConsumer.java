@@ -59,7 +59,7 @@ public class KafkaConsumer {
     }
 
     // 매수,매도 analysis에서 받기
-    @KafkaListener(topics = "transactions")
+    @KafkaListener(topics = "buySell")
     public void analysisEvent(String kafkaMessage){
 
         Map<Object, Object> map = new HashMap<>();
@@ -74,7 +74,9 @@ public class KafkaConsumer {
         }
 
         // 전체받아오기
+        System.out.println(kafkaMessage);
         JSONObject rjson = new JSONObject(kafkaMessage);
+        System.out.println(rjson);
 
         // leaderId
         Long leaderId = rjson.getLong("leaderId");

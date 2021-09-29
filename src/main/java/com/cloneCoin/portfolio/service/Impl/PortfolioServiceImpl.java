@@ -1,7 +1,6 @@
 package com.cloneCoin.portfolio.service.Impl;
 
 import com.cloneCoin.portfolio.client.BithumbOpenApi;
-import com.cloneCoin.portfolio.client.BithumbServiceClient;
 import com.cloneCoin.portfolio.client.WalletReadServiceClient;
 import com.cloneCoin.portfolio.domain.Coin;
 import com.cloneCoin.portfolio.domain.Copy;
@@ -14,8 +13,6 @@ import com.cloneCoin.portfolio.service.PortfolioService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,7 +29,6 @@ public class PortfolioServiceImpl implements PortfolioService {
     private final CopyRepository copyRepository;
     private final WalletReadServiceClient walletReadServiceClient;
     private final CoinRepository coinRepository;
-    private final BithumbServiceClient bithumbServiceClient;
     private final BithumbOpenApi bithumbOpenApi;
 
     // 포트폴리오 생성
@@ -79,6 +75,7 @@ public class PortfolioServiceImpl implements PortfolioService {
     @Override
     @Transactional
     public void UpdatePortfolio(BuySellDto buySellDto) {
+
         // 카프카로 받은 leaderId가 copy에 존재한지 찾기
         List<Copy> copyList = copyRepository.findByLeaderId(buySellDto.getLeaderId());
 
@@ -86,15 +83,17 @@ public class PortfolioServiceImpl implements PortfolioService {
         if(!copyList.isEmpty()){
             // userId 담을 리스트
             List<Long> userList = new ArrayList<>();
-
             // 카피에 있는 리더를 카피한 user 포트폴리오 변경해야함
-            for(int i=0; i <= copyList.size(); i++){
-                Long userId = copyList.get(i).getUserId();
+            for(int i=0; i < copyList.size(); i++){
 
+                Long userId = copyList.get(i).getUserId();
                 userList.add(userId);
             }
 
-            for(int i=0; i<=userList.size(); i++){
+            System.out.println(userList);
+
+            // userList 모든 유저를 다돌아야 하므로 아래 로직을 감싸야한다.
+            for(int i=0; i<userList.size(); i++){
                 System.out.println(userList.get(i));
             }
             List<CoinDto> beforeCoins = buySellDto.getBeforeCoins();
@@ -105,8 +104,15 @@ public class PortfolioServiceImpl implements PortfolioService {
             Double afterKRW = buySellDto.getAfterKRW();
             Double afterRatio = 0.0;
 
+            // 계산할때 소숫점 2번째 자리까지만 계산하는게 좋을듯
+
             // 카프카로 넘어온 코인 매수매도 for문
-            for(int i=0; i <= beforeCoins.size(); i++){
+            for(int i=0; i < beforeCoins.size(); i++){
+
+                // BTC 밖에 저장 안된다 지금
+                System.out.println("====================");
+                System.out.println(beforeCoins.size());
+                System.out.println("====================");
 
                 String coinName = beforeCoins.get(i).getName();
 
@@ -125,11 +131,11 @@ public class PortfolioServiceImpl implements PortfolioService {
                 afterRatio = (afterQuantity * afterAvgPrice) / beforeKRW;
 
                 // 수량이 다를경우 매수 또는 매도 발생
-                if(!(beforeQuantity.equals(afterQuantity)) || !(beforeAvgPrice.equals(afterAvgPrice))){
+                if(!(beforeQuantity.equals(afterQuantity))){
                     // 매도 발생
                     if(beforeQuantity > afterQuantity){
                         Double resultRatio = beforeRatio - afterRatio;
-                        for(int j=0; j<=userList.size(); j++){
+                        for(int j=0; j< userList.size(); j++){
 
                             // user에 Coin이 존재하는지 확인
                             Coin coin = coinRepository.findByUserId(userList.get(j));
@@ -154,10 +160,10 @@ public class PortfolioServiceImpl implements PortfolioService {
                     // 매수 발생
                     else{
                         Double resultRatio = afterRatio - beforeRatio;
-                        for(int j=0; j<=userList.size(); j++){
+                        for(int j=0; j< userList.size(); j++){
 
                             // user에 Coin이 존재하는지 확인
-                            Coin coin = coinRepository.findByUserId(userList.get(j));
+                            Coin coin = coinRepository.findByUserIdAndCoinName(userList.get(j), coinName);
 
                             // 코인이 없다면
                             if(coin == null){
@@ -172,7 +178,10 @@ public class PortfolioServiceImpl implements PortfolioService {
 
                                 // 코인 생성
                                 // 코인 처음살때는 현재가가 평단가 이다.
-                                Coin newCoin = new Coin(userList.get(j), buySellDto.getLeaderId(), coinName, buyQuantity, currentPrice); // 현재가
+                                Coin newCoin = new Coin(userList.get(j), buySellDto.getLeaderId(), coinName, buyQuantity, currentPrice);
+
+                                // 코인저장
+                                coinRepository.save(newCoin);
 
                                 // 코인 샀으면 balance에서 빼줘야함
                                 portfolio.MinusBalance(buyKRW);
@@ -188,6 +197,7 @@ public class PortfolioServiceImpl implements PortfolioService {
                                 // 소수점으로 계산하더라도 나머지가 있을 수 있는데 어떻게하지? => 코인을 사고 팔기만해도 돈이 달라질 수 있다.
                                 Double buyQuantity = buyKRW / currentPrice;//(현재가);
 
+                                // 코인 있을경우 여기 에러났었음
                                 Coin oldCoin = coinRepository.findByCoinName(coinName);
 
                                 // 코인 구매시 수량 증가 => 수량 증가시 평단가 바뀜
