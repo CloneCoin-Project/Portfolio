@@ -8,7 +8,7 @@ public interface CopyService {
 
     void createCopy(CopyStartRequestDto copyStartRequestDto);
 
-    void copyPut(CopyPutRequestDto copyPutRequestDto);
+    boolean copyPut(CopyPutRequestDto copyPutRequestDto);
 
     void copyDelete(CopyDeleteRequestDto copyDeleteRequestDto);
 }

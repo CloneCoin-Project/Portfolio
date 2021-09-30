@@ -5,6 +5,8 @@ import com.cloneCoin.portfolio.dto.CopyPutRequestDto;
 import com.cloneCoin.portfolio.dto.CopyStartRequestDto;
 import com.cloneCoin.portfolio.service.CopyService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -20,8 +22,14 @@ public class CopyController {
     }
 
     @PutMapping("/copy")
-    public void copyPut(@RequestBody CopyPutRequestDto copyPutRequestDto){
-        copyService.copyPut(copyPutRequestDto);
+    public ResponseEntity<String> copyPut(@RequestBody CopyPutRequestDto copyPutRequestDto){
+        boolean check = copyService.copyPut(copyPutRequestDto);
+        if(check){
+            return new ResponseEntity<>("copy 돈 추가/축소 되었습니다.", HttpStatus.OK);
+        }
+        else{
+            return new ResponseEntity<>("실패하였습니다.", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @DeleteMapping("/copy")
