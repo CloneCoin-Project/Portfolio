@@ -17,8 +17,9 @@ public class Copy {
     private Long userId;
     private Long leaderId;
     //private Date registerDate;
-    private Long totalInvestAmout;
-    //private Long copyProfit;
+    private Double totalInvestAmout;
+    private Double InvestBalance;
+    //private Double copyProfit;
 
     @ManyToOne
     @JoinColumn(name = "PORTFOLIO_ID")
@@ -28,10 +29,23 @@ public class Copy {
         this.userId = copyStartRequestDto.getUserId();
         this.leaderId = copyStartRequestDto.getLeaderId();
         this.totalInvestAmout = copyStartRequestDto.getAmount();
+        this.InvestBalance = copyStartRequestDto.getAmount();
         this.portfolio = portfolio;
+
     }
 
+    // 카피 돈 추가/축소
     public void UpdateInvest(Long amount) {
         this.totalInvestAmout += amount;
     }
+
+    public void CopyMinusBalance(Double buyKRW) {
+        this.InvestBalance -= buyKRW;
+    }
+
+    public void CopyPlusBalance(Double sellBalance) {
+        this.InvestBalance += sellBalance;
+    }
+
+    //
 }

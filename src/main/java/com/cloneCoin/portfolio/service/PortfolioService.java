@@ -1,5 +1,6 @@
 package com.cloneCoin.portfolio.service;
 
+import com.cloneCoin.portfolio.dto.BuySellDto;
 import com.cloneCoin.portfolio.dto.PortfolioDto;
 
 public interface PortfolioService {
@@ -9,5 +10,5 @@ public interface PortfolioService {
     // 나의포트폴리오 가져오기 등등 추가해야한다.
     PortfolioDto getPortfolioByUserId(Long userId);
 
-    void UpdatePortfolio(Long leaderId, Object before, Object after);
+    void UpdatePortfolio(BuySellDto buySellDto);
 }

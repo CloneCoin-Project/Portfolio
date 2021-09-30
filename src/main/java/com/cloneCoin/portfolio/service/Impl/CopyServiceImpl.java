@@ -3,6 +3,7 @@ package com.cloneCoin.portfolio.service.Impl;
 import com.cloneCoin.portfolio.client.WalletReadServiceClient;
 import com.cloneCoin.portfolio.domain.Copy;
 import com.cloneCoin.portfolio.domain.Portfolio;
+import com.cloneCoin.portfolio.dto.CopyDeleteRequestDto;
 import com.cloneCoin.portfolio.dto.CopyPutRequestDto;
 import com.cloneCoin.portfolio.dto.CopyStartRequestDto;
 import com.cloneCoin.portfolio.dto.WalletDto;
@@ -12,6 +13,8 @@ import com.cloneCoin.portfolio.service.CopyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -32,8 +35,10 @@ public class CopyServiceImpl implements CopyService {
         Copy copy = new Copy(copyStartRequestDto, portfolio);
         copyRepository.save(copy);
 
+        // 총 금액이랑 카피할 돈 비교해서 총금액보다 크다면 카피 불가
+
         // 카피 후 포트폴리오 에서 금액 차감
-        Long balance = portfolio.UpdateBalance(copyStartRequestDto.getAmount()); // 카피 후 잔액
+        Double balance = portfolio.MinusBalance(copyStartRequestDto.getAmount()); // 카피 후 잔액
 
         // 카피 한 코인 생성
         // 페인 사용
@@ -53,5 +58,23 @@ public class CopyServiceImpl implements CopyService {
         copy.UpdateInvest(copyPutRequestDto.getAmount());
 
         // 투자금 변경으로 일어날일
+    }
+
+    @Override
+    @Transactional
+    public void copyDelete(CopyDeleteRequestDto copyDeleteRequestDto) {
+        List<Copy> copyList = copyRepository.findByUserId(copyDeleteRequestDto.getUserId());
+
+        // 카피 삭제
+        for(int i=0; i<=copyList.size(); i++){
+
+            Portfolio portfolio = portfolioRepository.findByUserId(copyList.get(i).getUserId());
+            // 카피삭제시 투자했던 돈 반환
+            Double returnMoney = copyList.get(i).getTotalInvestAmout();
+
+            // 삭제완료시 돈 반환
+            copyRepository.delete(copyList.get(i));
+            portfolio.PlusBalance(returnMoney);
+        }
     }
 }

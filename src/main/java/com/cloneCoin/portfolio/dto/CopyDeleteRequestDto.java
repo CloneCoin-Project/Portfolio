@@ -3,8 +3,6 @@ package com.cloneCoin.portfolio.dto;
 import lombok.Getter;
 
 @Getter
-public class CopyStartRequestDto {
+public class CopyDeleteRequestDto {
     private Long userId;
-    private Long leaderId;
-    private Double amount;
 }
