@@ -23,12 +23,13 @@ public class Coin {
     @JoinColumn(name = "COPY_ID")
     private Copy copy;
 
-    public Coin(Long userId, Long leaderId, String coinName, Double buyQuantity, Double currentPrice) {
+    public Coin(Long userId, Long leaderId, String coinName, Double buyQuantity, Double currentPrice, Copy copy) {
         this.userId = userId;
         this.leaderId = leaderId;
         this.coinName = coinName;
         this.quantity = buyQuantity;
         this.avgPrice = currentPrice;
+        this.copy = copy;
     }
 
 
@@ -36,8 +37,10 @@ public class Coin {
         this.quantity -= sellQuantity;
     }
 
-    public void UpdateBuyQuantity(Double buyQuantity, Double totalAvgPrice) {
+    public Double UpdateBuyQuantity(Double buyQuantity, Double totalAvgPrice) {
         this.quantity += buyQuantity;
         this.avgPrice = totalAvgPrice;
+
+        return this.quantity;
     }
 }

@@ -13,7 +13,6 @@ import java.io.Serializable;
 @Table(name="portfolio")
 @NoArgsConstructor
 public class Portfolio{
-    // What is Serializable ?
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

@@ -7,6 +7,7 @@ import com.cloneCoin.portfolio.service.PortfolioService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.util.json.JSONParser;
 import org.json.JSONArray;
@@ -26,18 +27,12 @@ import java.util.Map;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class KafkaConsumer {
 
-    PortfolioRepository portfolioRepository;
-    PortfolioService portfolioService;
+    private final PortfolioRepository portfolioRepository;
+    private final PortfolioService portfolioService;
 
-    @Autowired
-    public KafkaConsumer(PortfolioRepository portfolioRepository, PortfolioService portfolioService) {
-        this.portfolioRepository = portfolioRepository;
-        this.portfolioService = portfolioService;
-    }
-
-    // postman 으로 topic, message 를 전달하면 produce 해주는 서버를 하나 만들자.
 
      @KafkaListener(topics = "transaction") // quickstart_events
      public void createPortfolio(String kafkaMessage) {

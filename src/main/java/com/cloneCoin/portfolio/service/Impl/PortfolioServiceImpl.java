@@ -35,7 +35,7 @@ public class PortfolioServiceImpl implements PortfolioService {
     @Override
     public void createPortfolio(Long userId) {
         System.out.println("createPorfoilo called!");
-        Portfolio portfolio = new Portfolio(userId, 0L, 10000.0);
+        Portfolio portfolio = new Portfolio(userId, 0L, 10000000.0);
 
         System.out.println("Repository save called!");
         portfolioRepository.save(portfolio);
@@ -71,6 +71,10 @@ public class PortfolioServiceImpl implements PortfolioService {
         return portfolioDto;
     }
 
+    public Double cal(Double x){
+        return Math.round(x*1000) / 1000.0;
+    }
+
     // analysis 매수, 매도 이벤트 발생시
     @Override
     @Transactional
@@ -79,7 +83,7 @@ public class PortfolioServiceImpl implements PortfolioService {
         // 카프카로 받은 leaderId가 copy에 존재한지 찾기
         List<Copy> copyList = copyRepository.findByLeaderId(buySellDto.getLeaderId());
 
-        // 카피한 리더가 있을경우만
+        // 카피한 리더가 있을경우만 실행
         if(!copyList.isEmpty()){
             // userId 담을 리스트
             List<Long> userList = new ArrayList<>();
@@ -90,12 +94,6 @@ public class PortfolioServiceImpl implements PortfolioService {
                 userList.add(userId);
             }
 
-            System.out.println(userList);
-
-            // userList 모든 유저를 다돌아야 하므로 아래 로직을 감싸야한다.
-            for(int i=0; i<userList.size(); i++){
-                System.out.println(userList.get(i));
-            }
             List<CoinDto> beforeCoins = buySellDto.getBeforeCoins();
             Double beforeKRW = buySellDto.getBeforeKRW();
             Double beforeRatio = 0.0;
@@ -109,110 +107,135 @@ public class PortfolioServiceImpl implements PortfolioService {
             // 카프카로 넘어온 코인 매수매도 for문
             for(int i=0; i < beforeCoins.size(); i++){
 
-                // BTC 밖에 저장 안된다 지금
-                System.out.println("====================");
-                System.out.println(beforeCoins.size());
-                System.out.println("====================");
-
                 String coinName = beforeCoins.get(i).getName();
 
                 // 코인에 현재가
                 Double currentPrice = bithumbOpenApi.TickerApi(coinName);
-                System.out.println(currentPrice);
 
                 // before
                 Double beforeQuantity = beforeCoins.get(i).getCoinQuantity();
                 Double beforeAvgPrice = beforeCoins.get(i).getAvgPrice();
-                beforeRatio = (beforeQuantity * beforeAvgPrice) / beforeKRW;
+                Double beforeTotalMoney = cal((beforeQuantity * beforeAvgPrice) + beforeKRW);
+                beforeRatio = cal((beforeQuantity * beforeAvgPrice) / beforeTotalMoney);
 
                 // after
                 Double afterQuantity = afterCoins.get(i).getCoinQuantity();
                 Double afterAvgPrice = afterCoins.get(i).getAvgPrice();
-                afterRatio = (afterQuantity * afterAvgPrice) / beforeKRW;
+                Double afterTotalMoney = cal((afterQuantity * afterAvgPrice) + afterKRW);
+                afterRatio = cal((afterQuantity * afterAvgPrice) / afterTotalMoney);
 
                 // 수량이 다를경우 매수 또는 매도 발생
                 if(!(beforeQuantity.equals(afterQuantity))){
                     // 매도 발생
                     if(beforeQuantity > afterQuantity){
                         Double resultRatio = beforeRatio - afterRatio;
+                        Double resultQuantity = (beforeQuantity - afterQuantity) / beforeQuantity;
                         for(int j=0; j< userList.size(); j++){
 
                             // user에 Coin이 존재하는지 확인
-                            Coin coin = coinRepository.findByUserId(userList.get(j));
+                            Coin oldCoin = coinRepository.findByUserIdAndCoinName(userList.get(j), coinName);
+
+                            Copy copy = copyRepository.findByUserIdAndLeaderId(userList.get(j), buySellDto.getLeaderId());
 
                             // coin이 존재하다면 resultRatio 만큼 매도 진행
-                            if(coin != null){
+                            if(oldCoin != null){
                                 Portfolio portfolio = portfolioRepository.findByUserId(userList.get(j));
 
                                 // user 가지고 있는 코인 수량에 resultRatio만큼 매도하면 되나?
-                                // 매도하면 평단가가 안바뀌니까 user에 수익률 신경안써도 되겠지?
-                                Double sellQuantity = coin.getQuantity() * (resultRatio / 100);
-                                coin.UpdateSellQuantity(sellQuantity);
+                                // 20% -> 10% 바뀜 : 해당 코인은 절반을 팔은거임 포트폴리오도 해당 코인 절반을 팔아야함
+                                // 매도에는 resultRatio를 쓰는것 보다 코인 수량으로 계산해서 매도하는게 좋을듯
 
+                                Double sellQuantity = oldCoin.getQuantity() * resultQuantity;
 
-                                // 매도하면 user balance는 증가해야함
-                                // 매도할때 현재가로 팔아야 하잖음 현재가 어캐 구하지?
-                                Double sellBalance = sellQuantity * currentPrice; //(현재가)
-                                portfolio.PlusBalance(sellBalance);
+                                //Double sellQuantity = coin.getQuantity() * (resultRatio / 100);
+                                oldCoin.UpdateSellQuantity(sellQuantity);
+
+                                // 매도하면 copy balance는 증가해야함
+                                Double sellBalance = cal(sellQuantity * currentPrice); //(현재가)
+                                copy.CopyPlusBalance(sellBalance);
+                                //portfolio.PlusBalance(sellBalance);
                            }
                         }
                     }
                     // 매수 발생
                     else{
-                        Double resultRatio = afterRatio - beforeRatio;
+                        Double resultRatio = cal(afterRatio - beforeRatio);
+                        System.out.println("========================");
+                        System.out.println("afterRatio : "+afterRatio);
+                        System.out.println("beforeRatio : "+beforeRatio);
+                        System.out.println("========================");
+                        Double resultQuantity = (afterQuantity - beforeQuantity) / beforeQuantity;
                         for(int j=0; j< userList.size(); j++){
 
                             // user에 Coin이 존재하는지 확인
-                            Coin coin = coinRepository.findByUserIdAndCoinName(userList.get(j), coinName);
+                            Coin oldCoin = coinRepository.findByUserIdAndCoinName(userList.get(j), coinName);
+                            Copy copy = copyRepository.findByUserIdAndLeaderId(userList.get(j), buySellDto.getLeaderId());
 
                             // 코인이 없다면
-                            if(coin == null){
+                            if(oldCoin == null){
 
                                 Portfolio portfolio = portfolioRepository.findByUserId(userList.get(j));
 
-                                // 구매할 돈 (ex resultRatio가 10퍼 라면 현재 balance에서 코인 10퍼만큼 더사면 되는건가?)
-                                Double buyKRW = portfolio.getBalance() * (resultRatio / 100);
+                                // 구매할 돈 (ex resultRatio가 10퍼 라면 현재 총 투자금액에서 코인 10퍼만큼 더사면 되는건가?)
+                                Double buyKRW = cal(copy.getTotalInvestAmout() * resultRatio);
 
                                 // 소수점으로 계산하더라도 나머지가 있을 수 있는데 어떻게하지? => 코인을 사고 팔기만해도 돈이 달라질 수 있다.
                                 Double buyQuantity = buyKRW / currentPrice;// (현재가);
 
+
                                 // 코인 생성
                                 // 코인 처음살때는 현재가가 평단가 이다.
-                                Coin newCoin = new Coin(userList.get(j), buySellDto.getLeaderId(), coinName, buyQuantity, currentPrice);
+                                Coin newCoin = new Coin(userList.get(j), buySellDto.getLeaderId(), coinName, buyQuantity, currentPrice, copy);
 
                                 // 코인저장
                                 coinRepository.save(newCoin);
 
-                                // 코인 샀으면 balance에서 빼줘야함
-                                portfolio.MinusBalance(buyKRW);
+                                // 코인 샀으면 balance에서 빼줘야함 => copy 투자금액에서 뻄
+                                copy.CopyMinusBalance(buyKRW);
+                                //portfolio.MinusBalance(buyKRW);
                             }
                             // 코인이 존재한다면
                             else{
 
                                 Portfolio portfolio = portfolioRepository.findByUserId(userList.get(j));
 
-                                // 구매할 돈 (ex resultRatio가 10퍼 라면 현재 balance에서 코인 10퍼만큼 더사면 되는건가?)
-                                Double buyKRW = portfolio.getBalance() * (resultRatio / 100);
+                                // 구매할 돈 (ex resultRatio가 10퍼 라면 현재 copy balance에서 코인 10퍼만큼 더사면 되는건가?)
+                                // 총 투자금액에 10퍼만큼 더사면 되는건가?
+                                Double buyKRW = cal(copy.getTotalInvestAmout() * resultRatio);
 
-                                // 소수점으로 계산하더라도 나머지가 있을 수 있는데 어떻게하지? => 코인을 사고 팔기만해도 돈이 달라질 수 있다.
-                                Double buyQuantity = buyKRW / currentPrice;//(현재가);
+                                // 투자 잔액이 더 많을경우에만 코인 매수
+                                if(copy.getInvestBalance() > buyKRW){
 
-                                // 코인 있을경우 여기 에러났었음
-                                Coin oldCoin = coinRepository.findByCoinName(coinName);
+                                    // 소수점으로 계산하더라도 나머지가 있을 수 있는데 어떻게하지? => 코인을 사고 팔기만해도 돈이 달라질 수 있다.
+                                    Double buyQuantity = buyKRW / currentPrice;//(현재가);
 
-                                // 코인 구매시 수량 증가 => 수량 증가시 평단가 바뀜
-                                Double totalQuantity = oldCoin.getQuantity() + buyQuantity;
+                                    // 코인 구매시 수량 증가 => 수량 증가시 평단가 바뀜
+                                    Double totalQuantity = oldCoin.getQuantity() + buyQuantity;
 
-                                Double oldMoney = oldCoin.getQuantity() * oldCoin.getAvgPrice();
-                                Double newMoney = buyQuantity * currentPrice;//(현재가);
+                                    Double oldMoney = cal(oldCoin.getQuantity() * oldCoin.getAvgPrice());
+                                    Double newMoney = cal(buyQuantity * currentPrice);//(현재가);
 
-                                // 평단가 계산식 => 총사용한 돈 / 총 수량
-                                Double totalAvgPrice = oldMoney + newMoney / totalQuantity;
+                                    // 평단가 계산식 => 총사용한 돈 / 총 수량
+                                    Double totalAvgPrice = cal((oldMoney + newMoney) / totalQuantity);
 
-                                oldCoin.UpdateBuyQuantity(buyQuantity, totalAvgPrice);
+                                    Double currentQuantity = oldCoin.UpdateBuyQuantity(buyQuantity, totalAvgPrice);
 
-                                // 코인 구매시 balance에서 뺴줘야함
-                                portfolio.MinusBalance(buyKRW);
+
+                                    // (현재수량 * 평단가)) => 기존 금액
+                                    Double usuallyResult = cal(currentQuantity * totalAvgPrice);
+
+                                    // ((현재수량 * 현재가) => 변동 금액
+                                    Double changeResult = cal(currentQuantity * currentPrice);
+
+                                    // 이 수익률은 매수매도 일어났을경우 업데이트가 되기 때문에 의미가 없다 => 현재가가 바뀔때마다 수익률은 바뀌어야한다.
+                                    // 수익률 계산식 : ((현재수량 * 현재가) - (현재수량 * 평단가)) / (현재수량 * 평단가) * 100
+                                    Double coinRevenue = cal((changeResult - usuallyResult) / usuallyResult * 100);
+
+                                    // 코인 샀으면 balance에서 빼줘야함 => copy 투자금액에서 뻄
+                                    copy.CopyMinusBalance(buyKRW);
+                                    //portfolio.MinusBalance(buyKRW);
+                                }
+
                             }
 
 
