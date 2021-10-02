@@ -34,11 +34,11 @@ public class Coin {
 
 
     public void UpdateSellQuantity(Double sellQuantity) {
-        this.quantity -= sellQuantity;
+        this.quantity = sellQuantity;
     }
 
     public Double UpdateBuyQuantity(Double buyQuantity, Double totalAvgPrice) {
-        this.quantity += buyQuantity;
+        this.quantity = buyQuantity;
         this.avgPrice = totalAvgPrice;
 
         return this.quantity;

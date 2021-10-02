@@ -4,8 +4,8 @@ import lombok.Getter;
 
 @Getter
 public class CopyPutRequestDto {
-    private Long userid;
+    private Long userId;
     private Long leaderId;
-    private Long amount;
+    private Double amount;
     private String type;
 }

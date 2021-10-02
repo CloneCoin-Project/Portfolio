@@ -55,19 +55,19 @@ public class CopyServiceImpl implements CopyService {
 
 
     public Double cal(Double x){
-        return Math.floor(x*1000) / 1000.0;
+        return Math.round(x*1000) / 1000.0;
     }
 
     // 카피 돈 추가/축소
     @Override
     @Transactional
     public boolean copyPut(CopyPutRequestDto copyPutRequestDto) {
-        Copy copy = copyRepository.findByUserIdAndLeaderId(copyPutRequestDto.getUserid(), copyPutRequestDto.getLeaderId());
-        Portfolio portfolio = portfolioRepository.findByUserId(copyPutRequestDto.getUserid());
+        Copy copy = copyRepository.findByUserIdAndLeaderId(copyPutRequestDto.getUserId(), copyPutRequestDto.getLeaderId());
+        Portfolio portfolio = portfolioRepository.findByUserId(copyPutRequestDto.getUserId());
 
         Double investAmount = copy.getTotalInvestAmout();
 
-        if(copyPutRequestDto.getType().equals("withdraw") && copyPutRequestDto.getAmount() > portfolio.getBalance()){
+        if(copyPutRequestDto.getType().equals("withdraw") && copyPutRequestDto.getAmount() > copy.getTotalInvestAmout()){
             return false;
         }
 
@@ -81,16 +81,18 @@ public class CopyServiceImpl implements CopyService {
                     Double coinAvg = coinList.get(i).getAvgPrice();
                     Double coinQuantity = coinList.get(i).getQuantity();
                     Double coinRatio = cal(coinAvg * coinQuantity / investAmount);
+                    System.out.println("전체 투자돈에 코인 비율 :" + coinRatio);
 
                     //현재가
                     Double currentPrice = bithumbOpenApi.TickerApi(coinName);
 
                     // 추가 투자 비율
                     Double buyKRW = cal(copyPutRequestDto.getAmount() * coinRatio);
+                    System.out.println("코인에 추가 할 돈 : " + buyKRW);
 
                     Double buyQuantity = cal(buyKRW / currentPrice);
 
-                    Double totalQuantity = cal(coinList.get(i).getQuantity() + buyQuantity);
+                    Double totalQuantity = coinList.get(i).getQuantity() + buyQuantity;
 
                     // 기존 평단가
                     Double oldMoney = cal(coinQuantity * coinAvg);
@@ -101,7 +103,9 @@ public class CopyServiceImpl implements CopyService {
                     // 새로운 평단가
                     Double totalAvgPrice = cal((oldMoney + newMoney) / totalQuantity);
 
-                    Double currentQuantity = coinList.get(i).UpdateBuyQuantity(buyQuantity, totalAvgPrice);
+                    Double currentQuantity = coinList.get(i).UpdateBuyQuantity(totalQuantity, totalAvgPrice);
+
+                    System.out.println("코인에 총 추가된 돈 : " + coinList.get(i).getQuantity() * coinList.get(i).getAvgPrice());
 
                 }
             }
@@ -112,42 +116,86 @@ public class CopyServiceImpl implements CopyService {
                     Double coinAvg = coinList.get(i).getAvgPrice();
                     Double coinQuantity = coinList.get(i).getQuantity();
                     Double coinRatio = cal(coinAvg * coinQuantity / investAmount);
+                    System.out.println("코인 수량 : " + coinQuantity);
+                    System.out.println("코인 평단가 : " + coinAvg);
+                    System.out.println("전체 투자돈에 코인 비율 :" + coinRatio);
 
                     //현재가
                     Double currentPrice = bithumbOpenApi.TickerApi(coinName);
 
                     // 돈 축소 비율
                     Double sellKRW = cal(copyPutRequestDto.getAmount() * coinRatio);
+                    System.out.println("코인 판매 할 돈 : " + sellKRW);
 
-                    Double sellQuantity = cal(sellKRW / currentPrice);
+                    // 매도할 코인보다 없을 경우에는 가지고있는 코인만 팔고 코인 삭제
+                    if(sellKRW > coinAvg * coinQuantity){
+                        sellKRW = coinAvg * coinQuantity;
 
-                    Double totalQuantity = cal(coinList.get(i).getQuantity() - sellQuantity);
+                        Double sellQuantity = sellKRW / currentPrice;
 
-                    // 매도는 평단가 안바뀐다.
+                        System.out.println("코인 수량 :" + coinList.get(i).getQuantity() );
+                        System.out.println("팔 코인 수량 : " + sellQuantity);
+                        Double totalQuantity = coinList.get(i).getQuantity() - sellQuantity;
 
-                    coinList.get(i).UpdateSellQuantity(totalQuantity);
+                        // 매도는 평단가 안바뀐다.
+
+                        // 코인 삭제
+                        coinRepository.delete(coinList.get(i));
+
+                        System.out.println("코인에 총 추가된 돈 : " + coinList.get(i).getQuantity() * coinList.get(i).getAvgPrice());
+                    }
+                    // 매도할 코인이 있을경우
+                    else{
+                        Double sellQuantity = sellKRW / currentPrice;
+
+                        System.out.println("코인 수량 :" + coinList.get(i).getQuantity() );
+                        System.out.println("팔 코인 수량 : " + sellQuantity);
+                        Double totalQuantity = coinList.get(i).getQuantity() - sellQuantity;
+
+                        // 매도는 평단가 안바뀐다.
+
+                        coinList.get(i).UpdateSellQuantity(totalQuantity);
+
+                        System.out.println("코인에 총 추가된 돈 : " + coinList.get(i).getQuantity() * coinList.get(i).getAvgPrice());
+                    }
+
+
 
                 }
             }
 
         }
         Double KRWRatio = cal(copy.getInvestBalance() / investAmount);
+        System.out.println("KRWRatio : " + KRWRatio);
         if(copyPutRequestDto.getType().equals("add")){
             // 잔액 비율만큼 잔액에 추가
             copy.CopyPlusBalance(cal(copyPutRequestDto.getAmount() * KRWRatio));
+            System.out.println("잔액에 추가할 돈 : " + cal(copyPutRequestDto.getAmount() * KRWRatio));
+
+            // 포트폴리오에 돈 빠져나감
+            portfolio.MinusBalance(copyPutRequestDto.getAmount());
+
+            // copy에게 총 투자금 변경
+            copy.PlusInvest(copyPutRequestDto.getAmount());
         }
         else{
             // 잔액 비율만큼 잔액 뺴기
             copy.CopyMinusBalance(cal(copyPutRequestDto.getAmount() * KRWRatio));
+
+            // 포트폴리오에 돈 들어옴
+            portfolio.PlusBalance(copyPutRequestDto.getAmount());
+
+            // copy에게 총 투자금 변경
+            copy.MinusInvest(copyPutRequestDto.getAmount());
         }
 
-        // copy에게 총 투자금 변경
-        copy.UpdateInvest(copyPutRequestDto.getAmount());
+
 
         return true;
 
     }
 
+    // 리더탈퇴
     @Override
     @Transactional
     public void copyDelete(CopyDeleteRequestDto copyDeleteRequestDto) {

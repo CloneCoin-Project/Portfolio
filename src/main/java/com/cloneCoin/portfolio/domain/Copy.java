@@ -34,9 +34,15 @@ public class Copy {
 
     }
 
+
+
     // 카피 돈 추가/축소
-    public void UpdateInvest(Long amount) {
+    public void PlusInvest(Double amount) {
         this.totalInvestAmout += amount;
+    }
+
+    public void MinusInvest(Double amount){
+        this.totalInvestAmout -= amount;
     }
 
     public void CopyMinusBalance(Double buyKRW) {

@@ -147,8 +147,14 @@ public class PortfolioServiceImpl implements PortfolioService {
 
                                 Double sellQuantity = oldCoin.getQuantity() * resultQuantity;
 
-                                //Double sellQuantity = coin.getQuantity() * (resultRatio / 100);
-                                oldCoin.UpdateSellQuantity(sellQuantity);
+                                Double totalQuantity = oldCoin.getQuantity() - sellQuantity;
+
+                                // 수량을 다 매도했을경우 데이터베이스에서 삭제
+                                if(totalQuantity <= 0){
+                                    coinRepository.delete(oldCoin);
+                                }
+
+                                oldCoin.UpdateSellQuantity(totalQuantity);
 
                                 // 매도하면 copy balance는 증가해야함
                                 Double sellBalance = cal(sellQuantity * currentPrice); //(현재가)
@@ -203,7 +209,7 @@ public class PortfolioServiceImpl implements PortfolioService {
                                 // 총 투자금액에 10퍼만큼 더사면 되는건가?
                                 Double buyKRW = cal(copy.getTotalInvestAmout() * resultRatio);
 
-                                // 투자 잔액이 더 많을경우에만 코인 매수
+                                // 남은 투자 잔액이 더 많을경우에만 코인 매수
                                 if(copy.getInvestBalance() > buyKRW){
 
                                     // 소수점으로 계산하더라도 나머지가 있을 수 있는데 어떻게하지? => 코인을 사고 팔기만해도 돈이 달라질 수 있다.
@@ -218,7 +224,7 @@ public class PortfolioServiceImpl implements PortfolioService {
                                     // 평단가 계산식 => 총사용한 돈 / 총 수량
                                     Double totalAvgPrice = cal((oldMoney + newMoney) / totalQuantity);
 
-                                    Double currentQuantity = oldCoin.UpdateBuyQuantity(buyQuantity, totalAvgPrice);
+                                    Double currentQuantity = oldCoin.UpdateBuyQuantity(totalQuantity, totalAvgPrice);
 
 
                                     // (현재수량 * 평단가)) => 기존 금액
