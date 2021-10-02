@@ -8,7 +8,6 @@ import com.cloneCoin.portfolio.domain.Portfolio;
 import com.cloneCoin.portfolio.dto.CopyDeleteRequestDto;
 import com.cloneCoin.portfolio.dto.CopyPutRequestDto;
 import com.cloneCoin.portfolio.dto.CopyStartRequestDto;
-import com.cloneCoin.portfolio.dto.WalletDto;
 import com.cloneCoin.portfolio.repository.CoinRepository;
 import com.cloneCoin.portfolio.repository.CopyRepository;
 import com.cloneCoin.portfolio.repository.PortfolioRepository;
@@ -202,6 +201,8 @@ public class CopyServiceImpl implements CopyService {
         Copy copy = copyRepository.findByUserIdAndLeaderId(copyDeleteRequestDto.getUserId(),
                 copyDeleteRequestDto.getLeaderId());
 
+        System.out.println(copyDeleteRequestDto.getUserId());
+        System.out.println(copyDeleteRequestDto.getLeaderId());
         Portfolio portfolio = portfolioRepository.findByUserId(copyDeleteRequestDto.getUserId());
 
         // 카피 중지를 하면 들고있던 코인은 현재가로 다 팔고 전체 돈 반환

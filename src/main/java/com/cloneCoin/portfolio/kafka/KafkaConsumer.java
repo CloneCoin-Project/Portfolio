@@ -9,11 +9,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.tomcat.util.json.JSONParser;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.json.JsonParser;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
@@ -57,16 +54,16 @@ public class KafkaConsumer {
     @KafkaListener(topics = "buySell")
     public void analysisEvent(String kafkaMessage){
 
-        Map<Object, Object> map = new HashMap<>();
-        ObjectMapper mapper = new ObjectMapper();
-
-        try {
-            map = mapper.readValue(kafkaMessage, new TypeReference<Map<Object, Object>>() {
-            });
-
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-        }
+//        Map<Object, Object> map = new HashMap<>();
+//        ObjectMapper mapper = new ObjectMapper();
+//
+//        try {
+//            map = mapper.readValue(kafkaMessage, new TypeReference<Map<Object, Object>>() {
+//            });
+//
+//        } catch (JsonProcessingException e) {
+//            e.printStackTrace();
+//        }
 
         // 전체받아오기
         System.out.println(kafkaMessage);
