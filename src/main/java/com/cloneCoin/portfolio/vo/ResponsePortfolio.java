@@ -6,6 +6,6 @@ import lombok.Data;
 @Data
 //@JsonInclude(JsonInclude.Include.)
 public class ResponsePortfolio {
-    private String userId;
+    private Long userId;
     private Long portfolioProfit;
 }

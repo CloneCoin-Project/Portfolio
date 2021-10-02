@@ -3,6 +3,7 @@ package com.cloneCoin.portfolio.controller;
 import com.cloneCoin.portfolio.dto.PortfolioDto;
 import com.cloneCoin.portfolio.service.PortfolioService;
 import com.cloneCoin.portfolio.vo.ResponsePortfolio;
+import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,13 +12,11 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 
 @RestController
-@RequestMapping("/portfolio/")
+@RequiredArgsConstructor
+@RequestMapping("/portfolio")
 public class PortfolioController {
-    PortfolioService portfolioService;
+    private final PortfolioService portfolioService;
 
-    public PortfolioController(PortfolioService portfolioService) {
-        this.portfolioService = portfolioService;
-    }
 
     @GetMapping("/welcome")
     public String welcome() {
@@ -29,8 +28,8 @@ public class PortfolioController {
         return String.format("Portfolio server is working %s", request.getServerPort());
     }
 
-    @GetMapping("/portfolio/{userId}")
-    public ResponseEntity<ResponsePortfolio> getPortfolio(@PathVariable("userId") String userId) {
+    @GetMapping("/{userId}")
+    public ResponseEntity<ResponsePortfolio> getPortfolio(@PathVariable("userId") Long userId) {
 
         PortfolioDto portfolioDto = portfolioService.getPortfolioByUserId(userId);
 
@@ -38,4 +37,6 @@ public class PortfolioController {
 
         return ResponseEntity.status(HttpStatus.OK).body(responsePortfolio);
     }
+
+
 }
