@@ -33,7 +33,7 @@ public class CopyController {
     }
 
     @DeleteMapping("/copy")
-    public void copyDelete(CopyDeleteRequestDto copyDeleteRequestDto){
+    public void copyDelete(@RequestBody CopyDeleteRequestDto copyDeleteRequestDto){
         copyService.copyDelete(copyDeleteRequestDto);
     }
 }
