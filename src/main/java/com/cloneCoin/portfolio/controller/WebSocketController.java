@@ -1,44 +1,32 @@
 package com.cloneCoin.portfolio.controller;
 
+import lombok.RequiredArgsConstructor;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.websocket.OnMessage;
-import javax.websocket.OnOpen;
-import javax.websocket.Session;
-import javax.websocket.server.ServerEndpoint;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
 @RestController
-@ServerEndpoint("/websocket")
+@RequiredArgsConstructor
 public class WebSocketController {
 
-    private static final List<Session> session = new ArrayList<Session>();
+    private final SimpMessagingTemplate webSocket;
 
-    @OnOpen
-    public void open(Session newUser) {
-        System.out.println("connected");
-        session.add(newUser);
-        System.out.println(newUser.getId());
+    @MessageMapping("/sendTo")
+    @SendTo("/topics/sendTo")
+    public String SendToMessage() throws Exception {
+        return "SendTo";
     }
 
-    @OnMessage
-    public void getMsg(Session recieveSession, String msg) {
-        for (int i = 0; i < session.size(); i++) {
-            if (!recieveSession.getId().equals(session.get(i).getId())) {
-                try {
-                    session.get(i).getBasicRemote().sendText("상대 : "+msg);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }else{
-                try {
-                    session.get(i).getBasicRemote().sendText("나 : "+msg);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
+    @MessageMapping("/Template") public void SendTemplateMessage() {
+        webSocket.convertAndSend("/topics/template" , "Template");
     }
+
+    @RequestMapping(value="/api")
+    public void SendAPI() {
+        webSocket.convertAndSend("/topics/api" , "API");
+    }
+
+
 }

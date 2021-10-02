@@ -235,7 +235,10 @@ public class PortfolioServiceImpl implements PortfolioService {
 
                                     // 이 수익률은 매수매도 일어났을경우 업데이트가 되기 때문에 의미가 없다 => 현재가가 바뀔때마다 수익률은 바뀌어야한다.
                                     // 수익률 계산식 : ((현재수량 * 현재가) - (현재수량 * 평단가)) / (현재수량 * 평단가) * 100
+                                    // 이건 쓸떄없는것 같다
                                     Double coinRevenue = cal((changeResult - usuallyResult) / usuallyResult * 100);
+
+                                    // 웹소켓을 사용하여 코인매수매도가 있을때마다 userId, leaderId, 코인이름, 코인수량, 코인평단가를 보내주면 되나?
 
                                     // 코인 샀으면 balance에서 빼줘야함 => copy 투자금액에서 뻄
                                     copy.CopyMinusBalance(buyKRW);
