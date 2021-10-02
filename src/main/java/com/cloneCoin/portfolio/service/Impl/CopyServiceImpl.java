@@ -195,22 +195,32 @@ public class CopyServiceImpl implements CopyService {
 
     }
 
-    // 리더탈퇴
+    // 카피중지
     @Override
     @Transactional
     public void copyDelete(CopyDeleteRequestDto copyDeleteRequestDto) {
-        List<Copy> copyList = copyRepository.findByUserId(copyDeleteRequestDto.getUserId());
+        Copy copy = copyRepository.findByUserIdAndLeaderId(copyDeleteRequestDto.getUserId(),
+                copyDeleteRequestDto.getLeaderId());
 
-        // 카피 삭제
-        for(int i=0; i<=copyList.size(); i++){
+        Portfolio portfolio = portfolioRepository.findByUserId(copyDeleteRequestDto.getUserId());
 
-            Portfolio portfolio = portfolioRepository.findByUserId(copyList.get(i).getUserId());
-            // 카피삭제시 투자했던 돈 반환
-            Double returnMoney = copyList.get(i).getTotalInvestAmout();
+        // 카피 중지를 하면 들고있던 코인은 현재가로 다 팔고 전체 돈 반환
+        List<Coin> coinList = coinRepository.findByCopyId(copy.getId());
+        Double totalCoin = 0.0;
+        for(int i=0; i < coinList.size(); i++){
+            Double currentPrice = bithumbOpenApi.TickerApi(coinList.get(i).getCoinName());
+            Double coinQuantity = coinList.get(i).getQuantity();
 
-            // 삭제완료시 돈 반환
-            copyRepository.delete(copyList.get(i));
-            portfolio.PlusBalance(returnMoney);
+            Double sellKRW = cal(coinQuantity * currentPrice);
+            totalCoin += sellKRW;
+
+            // 코인 삭제
+            coinRepository.delete(coinList.get(i));
         }
+        // 코인 판돈이랑 남은 잔액 반환
+        Double returnKRW = copy.getInvestBalance() + totalCoin;
+        portfolio.PlusBalance(returnKRW);
+
+        copyRepository.delete(copy);
     }
 }

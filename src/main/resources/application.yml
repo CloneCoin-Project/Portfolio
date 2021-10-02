@@ -4,12 +4,12 @@ server:
 spring:
   application:
     name: portfolio-server
-  h2:
-    console:
-      enabled: true
-      settings:
-        web-allow-others: true
-      path: /h2-console
+#  h2:
+#    console:
+#      enabled: true
+#      settings:
+#        web-allow-others: true
+#      path: /h2-console
   # jpa : micro-service 구동될때 초기 데이터 sql 에 등록된 것 자동으로 Insert 할 때 사용 wallet 에서 쓰면된다.
   # resources > data.sql 에 sql 넣으면 된다.
   jpa:
@@ -18,8 +18,14 @@ spring:
     show-sql: true
     generate-ddl: true
   datasource:
-    dirver-class-name: org.h2.Driver
-    url: jdbc:h2:mem:testdb
+    #    dirver-class-name: org.h2.Driver
+    #    url: jdbc:h2:mem:testdb
+    driver-class-name: org.mariadb.jdbc.Driver
+    url: jdbc:mariadb://localhost:3306/example?serverTimezone=UTC&characterEncoding=UTF-8
+    username: root
+    password: root
+
+
 
 eureka:
   instance:
