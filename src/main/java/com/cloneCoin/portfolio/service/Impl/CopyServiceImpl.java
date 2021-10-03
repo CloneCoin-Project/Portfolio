@@ -82,6 +82,8 @@ public class CopyServiceImpl implements CopyService {
 
         List<Coin> coinList = coinRepository.findByCopyId(copy.getId());
 
+        Double sellKRW = 0.0;
+
         // 투자금 변경으로 일어날일
         if(!coinList.isEmpty()){
             if(copyPutRequestDto.getType().equals("add")){
@@ -133,7 +135,7 @@ public class CopyServiceImpl implements CopyService {
                     Double currentPrice = bithumbOpenApi.TickerApi(coinName);
 
                     // 돈 축소
-                    Double sellKRW = cal(copyPutRequestDto.getAmount() * coinRatio);
+                    sellKRW = cal(copyPutRequestDto.getAmount() * coinRatio);
                     System.out.println("코인 판매 할 돈 : " + sellKRW);
 
                     // 매도할 코인보다 없을 경우에는 가지고있는 코인만 팔고 코인 삭제
@@ -201,12 +203,10 @@ public class CopyServiceImpl implements CopyService {
         }
         else{
             // 잔액 비율만큼 잔액 뺴기
-            if(copy.getInvestBalance() - copyPutRequestDto.getAmount() * KRWRatio < 0){
+            if(copy.getInvestBalance() - copyPutRequestDto.getAmount() * KRWRatio <= 0){
 
                 // 남은 잔액이 더 적을경우 남은 잔액만 뺀다.
-                portfolio.PlusBalance(copy.getInvestBalance());
-
-                copyRepository.delete(copy);
+                portfolio.PlusBalance(copy.getInvestBalance() + sellKRW);
 
 
             }else{
@@ -216,6 +216,10 @@ public class CopyServiceImpl implements CopyService {
 
                 // copy에게 총 투자금 변경
                 copy.MinusInvest(copyPutRequestDto.getAmount());
+            }
+
+            if(copy.getInvestBalance() < 0 || copy.getTotalInvestAmout() <= 0){
+                copyRepository.delete(copy);
             }
 
 
