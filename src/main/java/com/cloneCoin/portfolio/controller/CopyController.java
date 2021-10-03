@@ -3,6 +3,7 @@ package com.cloneCoin.portfolio.controller;
 import com.cloneCoin.portfolio.dto.CopyDeleteRequestDto;
 import com.cloneCoin.portfolio.dto.CopyPutRequestDto;
 import com.cloneCoin.portfolio.dto.CopyStartRequestDto;
+import com.cloneCoin.portfolio.dto.CopyStartResponseDto;
 import com.cloneCoin.portfolio.service.CopyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -17,8 +18,16 @@ public class CopyController {
     private final CopyService copyService;
 
     @PostMapping("/copy")
-    public void copyStart(@RequestBody CopyStartRequestDto copyStartRequestDto){
-        copyService.createCopy(copyStartRequestDto);
+    public ResponseEntity<CopyStartResponseDto> copyStart(@RequestBody CopyStartRequestDto copyStartRequestDto){
+
+        CopyStartResponseDto copyStartResponseDto = copyService.createCopy(copyStartRequestDto);
+
+        if(copyStartResponseDto == null){
+            return new ResponseEntity<>(copyStartResponseDto, HttpStatus.OK);
+        }
+        else{
+            return new ResponseEntity<>(copyStartResponseDto, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @PutMapping("/copy")
