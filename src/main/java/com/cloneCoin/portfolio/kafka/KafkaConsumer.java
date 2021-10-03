@@ -31,7 +31,7 @@ public class KafkaConsumer {
     private final PortfolioService portfolioService;
 
 
-     @KafkaListener(topics = "transaction") // quickstart_events
+     @KafkaListener(topics = "user-create-topic") // quickstart_events
      public void createPortfolio(String kafkaMessage) {
         log.info("Kafka message: =====> " + kafkaMessage);
 
@@ -51,7 +51,7 @@ public class KafkaConsumer {
     }
 
     // 매수,매도 analysis에서 받기
-    @KafkaListener(topics = "buySell")
+    @KafkaListener(topics = "buy-sell")
     public void analysisEvent(String kafkaMessage){
 
 //        Map<Object, Object> map = new HashMap<>();
