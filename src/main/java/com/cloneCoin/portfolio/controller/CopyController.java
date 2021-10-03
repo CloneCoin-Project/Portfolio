@@ -1,9 +1,6 @@
 package com.cloneCoin.portfolio.controller;
 
-import com.cloneCoin.portfolio.dto.CopyDeleteRequestDto;
-import com.cloneCoin.portfolio.dto.CopyPutRequestDto;
-import com.cloneCoin.portfolio.dto.CopyStartRequestDto;
-import com.cloneCoin.portfolio.dto.CopyStartResponseDto;
+import com.cloneCoin.portfolio.dto.*;
 import com.cloneCoin.portfolio.service.CopyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,7 +19,7 @@ public class CopyController {
 
         CopyStartResponseDto copyStartResponseDto = copyService.createCopy(copyStartRequestDto);
 
-        if(copyStartResponseDto == null){
+        if(copyStartResponseDto != null){
             return new ResponseEntity<>(copyStartResponseDto, HttpStatus.OK);
         }
         else{
@@ -42,7 +39,7 @@ public class CopyController {
     }
 
     @DeleteMapping("/copy")
-    public void copyDelete(@RequestBody CopyDeleteRequestDto copyDeleteRequestDto){
-        copyService.copyDelete(copyDeleteRequestDto);
+    public CopyDeleteResponseDto copyDelete(@RequestBody CopyDeleteRequestDto copyDeleteRequestDto){
+        return copyService.copyDelete(copyDeleteRequestDto);
     }
 }
