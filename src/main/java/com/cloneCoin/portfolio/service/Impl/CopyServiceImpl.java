@@ -8,6 +8,7 @@ import com.cloneCoin.portfolio.domain.Portfolio;
 import com.cloneCoin.portfolio.dto.CopyDeleteRequestDto;
 import com.cloneCoin.portfolio.dto.CopyPutRequestDto;
 import com.cloneCoin.portfolio.dto.CopyStartRequestDto;
+import com.cloneCoin.portfolio.dto.CopyStartResponseDto;
 import com.cloneCoin.portfolio.repository.CoinRepository;
 import com.cloneCoin.portfolio.repository.CopyRepository;
 import com.cloneCoin.portfolio.repository.PortfolioRepository;
@@ -30,19 +31,29 @@ public class CopyServiceImpl implements CopyService {
 
     @Override
     @Transactional
-    public void createCopy(CopyStartRequestDto copyStartRequestDto) {
+    public CopyStartResponseDto createCopy(CopyStartRequestDto copyStartRequestDto) {
 
         // 나의 포트폴리오 조회
-        System.out.println(copyStartRequestDto.getUserId());
         Portfolio portfolio = portfolioRepository.findByUserId(copyStartRequestDto.getUserId());
-        // 카피 시작
-        Copy copy = new Copy(copyStartRequestDto, portfolio);
-        copyRepository.save(copy);
 
-        // 총 금액이랑 카피할 돈 비교해서 총금액보다 크다면 카피 불가
+        Copy copyCheck = copyRepository.findByUserIdAndLeaderId(copyStartRequestDto.getUserId(), copyStartRequestDto.getLeaderId());
 
-        // 카피 후 포트폴리오 에서 금액 차감
-        Double balance = portfolio.MinusBalance(copyStartRequestDto.getAmount()); // 카피 후 잔액
+        if(portfolio.getBalance() > copyStartRequestDto.getAmount() && copyCheck == null){
+            // 카피 시작
+            Copy copy = new Copy(copyStartRequestDto, portfolio);
+            copyRepository.save(copy);
+
+
+            // 카피 후 포트폴리오 에서 금액 차감
+            Double balance = portfolio.MinusBalance(copyStartRequestDto.getAmount()); // 카피 후 잔액
+
+            return new CopyStartResponseDto(copyStartRequestDto, balance);
+        }
+
+        return new CopyStartResponseDto();
+
+
+
 
         // 카피 한 코인 생성
         // 페인 사용
