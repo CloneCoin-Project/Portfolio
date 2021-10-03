@@ -1,15 +1,15 @@
 package com.cloneCoin.portfolio.controller;
 
-import com.cloneCoin.portfolio.dto.PortfolioDto;
+import com.cloneCoin.portfolio.dto.WalletDto;
 import com.cloneCoin.portfolio.service.PortfolioService;
-import com.cloneCoin.portfolio.vo.ResponsePortfolio;
 import lombok.RequiredArgsConstructor;
-import org.modelmapper.ModelMapper;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -29,13 +29,12 @@ public class PortfolioController {
     }
 
     @GetMapping("/{userId}")
-    public ResponseEntity<ResponsePortfolio> getPortfolio(@PathVariable("userId") Long userId) {
+    public List<WalletDto> getPortfolio(@PathVariable("userId") Long userId) {
 
-        PortfolioDto portfolioDto = portfolioService.getPortfolioByUserId(userId);
+        return portfolioService.getPortfolioByUserId(userId);
 
-        ResponsePortfolio responsePortfolio = new ModelMapper().map(portfolioDto, ResponsePortfolio.class);
+        //ResponsePortfolio responsePortfolio = new ModelMapper().map(portfolioDto, ResponsePortfolio.class);
 
-        return ResponseEntity.status(HttpStatus.OK).body(responsePortfolio);
     }
 
 
