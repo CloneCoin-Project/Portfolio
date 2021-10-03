@@ -71,7 +71,7 @@ public class KafkaConsumer {
         System.out.println(rjson);
 
         // leaderId
-        Long leaderId = rjson.getLong("leaderId");
+        Long leaderId = rjson.getLong("userId");
 
         // before 부분
         JSONObject jsonBefore = rjson.getJSONObject("before");
@@ -85,7 +85,7 @@ public class KafkaConsumer {
         List<CoinDto> beforeCoinDtoList = new ArrayList<>();
         for(int i=0; i<jsonBeforeCoins.length(); i++){
             JSONObject coinJson = jsonBeforeCoins.getJSONObject(i);
-            String name = coinJson.getString("name");
+            String name = coinJson.getString("coinName");
             Double coinQuantity = coinJson.getDouble("coinQuantity");
             Double avgPrice = coinJson.getDouble("avgPrice");
             CoinDto coinDto = new CoinDto(name, coinQuantity, avgPrice);
@@ -105,7 +105,7 @@ public class KafkaConsumer {
         for(int i=0; i<jsonAfterCoins.length(); i++){
 
             JSONObject coinJson = jsonAfterCoins.getJSONObject(i);
-            String name = coinJson.getString("name");
+            String name = coinJson.getString("coinName");
             Double coinQuantity = coinJson.getDouble("coinQuantity");
             Double avgPrice = coinJson.getDouble("avgPrice");
             CoinDto coinDto = new CoinDto(name, coinQuantity, avgPrice);
