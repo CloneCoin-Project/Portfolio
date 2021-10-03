@@ -14,4 +14,6 @@ public interface CoinRepository extends CrudRepository<Coin, Long> {
     Coin findByUserIdAndCoinName(Long aLong, String coinName);
 
     List<Coin> findByCopyId(Long id);
+
+    List<Coin> findByUserIdAndLeaderId(Long userId, Long leaderId);
 }
