@@ -1,9 +1,6 @@
 package com.cloneCoin.portfolio.service;
 
-import com.cloneCoin.portfolio.dto.CopyDeleteRequestDto;
-import com.cloneCoin.portfolio.dto.CopyPutRequestDto;
-import com.cloneCoin.portfolio.dto.CopyStartRequestDto;
-import com.cloneCoin.portfolio.dto.CopyStartResponseDto;
+import com.cloneCoin.portfolio.dto.*;
 
 public interface CopyService {
 
@@ -11,5 +8,5 @@ public interface CopyService {
 
     boolean copyPut(CopyPutRequestDto copyPutRequestDto);
 
-    void copyDelete(CopyDeleteRequestDto copyDeleteRequestDto);
+    CopyDeleteResponseDto copyDelete(CopyDeleteRequestDto copyDeleteRequestDto);
 }
