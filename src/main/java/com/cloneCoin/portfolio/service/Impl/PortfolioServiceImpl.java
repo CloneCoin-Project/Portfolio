@@ -51,24 +51,29 @@ public class PortfolioServiceImpl implements PortfolioService {
 
     // 포트폴리오 조회
     @Override
-    public PortfolioDto getPortfolioByUserId(Long userId) {
+    public List<WalletDto> getPortfolioByUserId(Long userId) {
         Portfolio portfolio = portfolioRepository.findByUserId(userId);
 
         List<Copy> copyList = copyRepository.findByPortfolioId(portfolio.getId());
 
-        List<WalletDto> walletDtoList = new ArrayList<>();
+        List<WalletDto> walletDtoList = walletReadServiceClient.getWallets();
 
-        for (Copy copy : copyList) {            // for(int i=0; i<copyList.size(); i++)
-            Long leaderId = copy.getLeaderId(); // Long leaderId = copyList.get(i).getLeaderId();
+        List<WalletDto> walletReturnList = new ArrayList<>();
 
-            // 페인 클라이언트 사용
-            WalletDto walletDto = walletReadServiceClient.getWallets(leaderId);
-
-            walletDtoList.add(walletDto);
+        for (Copy copy : copyList) {
+            Long leaderId = copy.getLeaderId();
+            for (WalletDto walletDto : walletDtoList) {
+                if (leaderId.equals(walletDto.getLeaderId())) {
+                    walletReturnList.add(walletDto);
+                    break;
+                }
+            }
         }
 
-        PortfolioDto portfolioDto = new PortfolioDto(portfolio, walletDtoList);
-        return portfolioDto;
+        return walletReturnList;
+
+//        PortfolioDto portfolioDto = new PortfolioDto(portfolio, walletDtoList);
+//        return portfolioDto;
     }
 
     public Double cal(Double x){
