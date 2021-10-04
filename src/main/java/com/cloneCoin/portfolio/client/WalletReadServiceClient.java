@@ -9,7 +9,7 @@ import java.util.List;
 @FeignClient(name = "walletRead")
 public interface WalletReadServiceClient {
 
-    @GetMapping("/wallet/leaders")
+    @GetMapping("/walletread/leaders")
     List<WalletDto> getWallets();
 
 }
