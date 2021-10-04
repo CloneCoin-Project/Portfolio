@@ -9,11 +9,13 @@ import com.cloneCoin.portfolio.dto.*;
 import com.cloneCoin.portfolio.repository.CoinRepository;
 import com.cloneCoin.portfolio.repository.CopyRepository;
 import com.cloneCoin.portfolio.repository.PortfolioRepository;
+import com.cloneCoin.portfolio.dto.CopyRatioDto;
 import com.cloneCoin.portfolio.service.CopyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -26,6 +28,39 @@ public class CopyServiceImpl implements CopyService {
     private final CoinRepository coinRepository;
     private final BithumbOpenApi bithumbOpenApi;
 
+    // 카피수 조회
+    @Override
+    public CopyAmountDto copyGet(Long leaderId) {
+        List<Copy> copy = copyRepository.findByLeaderId(leaderId);
+        return new CopyAmountDto(copy.size());
+    }
+
+    // 카피 비율
+    @Override
+    public List<CopyRatioDto> copyRatio(Long userId) {
+        List<Copy> copyList = copyRepository.findByUserId(userId);
+
+        Double copyMoney =0.0;
+
+        for(int i=0; i<copyList.size(); i++){
+            copyMoney += copyList.get(i).getTotalInvestAmout();
+        }
+
+        List<CopyRatioDto> copyRatioDtos = new ArrayList<>();
+
+        for(int i=0; i<copyList.size(); i++){
+            Double ratio = cal(copyList.get(i).getTotalInvestAmout() / copyMoney);
+            CopyRatioDto copyRatioDto = new CopyRatioDto(copyList.get(i).getLeaderId(), copyList.get(i).getLeaderName(), cal(ratio * 100));
+            copyRatioDtos.add(copyRatioDto);
+
+        }
+
+        return copyRatioDtos;
+
+
+    }
+
+    // 카피 시작
     @Override
     @Transactional
     public CopyStartResponseDto createCopy(CopyStartRequestDto copyStartRequestDto) {
@@ -48,6 +83,7 @@ public class CopyServiceImpl implements CopyService {
         }else{
             return new CopyStartResponseDto();
         }
+
 
 
 
