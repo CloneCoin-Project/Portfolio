@@ -51,7 +51,7 @@ public class PortfolioServiceImpl implements PortfolioService {
 
     // 포트폴리오 조회
     @Override
-    public List<WalletDto> getPortfolioByUserId(Long userId) {
+    public PortfolioResponseDto getPortfolioByUserId(Long userId) {
         Portfolio portfolio = portfolioRepository.findByUserId(userId);
 
         List<Copy> copyList = copyRepository.findByPortfolioId(portfolio.getId());
@@ -69,8 +69,7 @@ public class PortfolioServiceImpl implements PortfolioService {
                 }
             }
         }
-
-        return walletReturnList;
+        return new PortfolioResponseDto(portfolio.getBalance(), walletReturnList);
 
 //        PortfolioDto portfolioDto = new PortfolioDto(portfolio, walletDtoList);
 //        return portfolioDto;

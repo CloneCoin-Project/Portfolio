@@ -1,6 +1,6 @@
 package com.cloneCoin.portfolio.controller;
 
-import com.cloneCoin.portfolio.dto.WalletDto;
+import com.cloneCoin.portfolio.dto.PortfolioResponseDto;
 import com.cloneCoin.portfolio.service.PortfolioService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -29,7 +28,7 @@ public class PortfolioController {
     }
 
     @GetMapping("/{userId}")
-    public List<WalletDto> getPortfolio(@PathVariable("userId") Long userId) {
+    public PortfolioResponseDto getPortfolio(@PathVariable("userId") Long userId) {
 
         return portfolioService.getPortfolioByUserId(userId);
 
