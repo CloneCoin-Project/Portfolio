@@ -41,7 +41,7 @@ public class CoinServiceImpl implements CoinService {
                         String coinName = coin.getCoinName();
                         Double coinAvg = coin.getAvgPrice();
                         Double coinQuantity = coin.getQuantity();
-                        CoinResponseDto coinResponseDto = new CoinResponseDto(coin.getUserId(), coin.getLeaderId(),
+                        CoinResponseDto coinResponseDto = new CoinResponseDto(coin.getUserId(), coin.getLeaderId(), copy.getLeaderName(),
                                 coinName, coinAvg, coinQuantity);
 
                         coinResponseDtoList.add(coinResponseDto);
