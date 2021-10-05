@@ -27,8 +27,7 @@ public class CopyController {
     public ResponseEntity<CopyStartResponseDto> copyStart(@RequestBody CopyStartRequestDto copyStartRequestDto){
 
         CopyStartResponseDto copyStartResponseDto = copyService.createCopy(copyStartRequestDto);
-
-        if(copyStartResponseDto != null){
+        if(copyStartResponseDto.getUserId() != null){
             return new ResponseEntity<>(copyStartResponseDto, HttpStatus.OK);
         }
         else{
@@ -39,8 +38,7 @@ public class CopyController {
     @PutMapping("/copy")
     public ResponseEntity<CopyPutResponseDto> copyPut(@RequestBody CopyPutRequestDto copyPutRequestDto){
         CopyPutResponseDto check = copyService.copyPut(copyPutRequestDto);
-        System.out.println(check);
-        if(check.getLeaderId() != null){
+        if(check.getUserId() != null){
             return new ResponseEntity<>(check, HttpStatus.OK);
         }
         else{

@@ -109,7 +109,7 @@ public class CopyServiceImpl implements CopyService {
     public CopyPutResponseDto copyPut(CopyPutRequestDto copyPutRequestDto) {
         Copy copy = copyRepository.findByUserIdAndLeaderId(copyPutRequestDto.getUserId(), copyPutRequestDto.getLeaderId());
         Portfolio portfolio = portfolioRepository.findByUserId(copyPutRequestDto.getUserId());
-
+        String leaderName = copy.getLeaderName();
         Double investAmount = copy.getTotalInvestAmout();
 
         if(copyPutRequestDto.getType().equals("withdraw") && copyPutRequestDto.getAmount() > copy.getTotalInvestAmout()){
@@ -236,13 +236,18 @@ public class CopyServiceImpl implements CopyService {
 
             // copy에게 총 투자금 변경
             copy.PlusInvest(copyPutRequestDto.getAmount());
+
         }
         else{
             // 잔액 비율만큼 잔액 뺴기
             if(copy.getInvestBalance() - copyPutRequestDto.getAmount() * KRWRatio <= 0){
 
-                // 남은 잔액이 더 적을경우 남은 잔액만 뺀다.
                 portfolio.PlusBalance(copy.getInvestBalance() + sellKRW);
+
+                copy.MinusInvest(copy.getInvestBalance() + sellKRW);
+
+                copy.CopyMinusBalance(copy.getInvestBalance());
+                // 남은 잔액이 더 적을경우 남은 잔액만 뺀다.
 
 
             }else{
@@ -253,13 +258,14 @@ public class CopyServiceImpl implements CopyService {
                 // copy에게 총 투자금 변경
                 copy.MinusInvest(copyPutRequestDto.getAmount());
             }
-
+            System.out.println(copy.getTotalInvestAmout());
             if(copy.getInvestBalance() < 0 || copy.getTotalInvestAmout() <= 0){
+                coinRepository.deleteAll(coinList);
                 copyRepository.delete(copy);
             }
         }
 
-        return new CopyPutResponseDto(copyPutRequestDto, copy.getLeaderName(), portfolio.getBalance());
+        return new CopyPutResponseDto(copyPutRequestDto, leaderName, portfolio.getBalance());
 
     }
 

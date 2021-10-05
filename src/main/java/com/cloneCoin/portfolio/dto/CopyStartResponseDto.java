@@ -8,14 +8,14 @@ public class CopyStartResponseDto {
     private Long leaderId;
     private String leaderName;
     private Double amount;
-    private Double copyBalance;
+    private Double resultBalance;
 
     public CopyStartResponseDto(CopyStartRequestDto copyStartRequestDto, Double balance) {
         this.userId = copyStartRequestDto.getUserId();
         this.leaderId = copyStartRequestDto.getLeaderId();
         this.leaderName = copyStartRequestDto.getLeaderName();
         this.amount = copyStartRequestDto.getAmount();
-        this.copyBalance = balance;
+        this.resultBalance = balance;
     }
 
     public CopyStartResponseDto() {
