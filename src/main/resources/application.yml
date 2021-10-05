@@ -4,26 +4,26 @@ server:
 spring:
   application:
     name: portfolio
-  h2:
-    console:
-      enabled: true
-      settings:
-        web-allow-others: true
-      path: /h2-console
+#  h2:
+#    console:
+#      enabled: true
+#      settings:
+#        web-allow-others: true
+#      path: /h2-console
   # jpa : micro-service 구동될때 초기 데이터 sql 에 등록된 것 자동으로 Insert 할 때 사용 wallet 에서 쓰면된다.
   # resources > data.sql 에 sql 넣으면 된다.
   jpa:
     show-sql: true
     generate-ddl: true
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
   datasource:
-      dirver-class-name: org.h2.Driver
-      url: jdbc:h2:mem:testdb
-#    driver-class-name: com.mysql.cj.jdbc.Driver
-#    url: jdbc:mysql://clonecoin-portfolio-db.crtppt0lvgk7.ap-northeast-2.rds.amazonaws.com:3306/portfolio?serverTimezone=UTC&characterEncoding=UTF-8
-#    username: admin
-#    password: ekfk167167
+#      dirver-class-name: org.h2.Driver
+#      url: jdbc:h2:mem:testdb
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://clonecoin-portfolio-db.crtppt0lvgk7.ap-northeast-2.rds.amazonaws.com:3306/portfolio?serverTimezone=UTC&characterEncoding=UTF-8
+    username: admin
+    password: ekfk167167
 
 
 

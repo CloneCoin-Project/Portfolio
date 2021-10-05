@@ -8,6 +8,7 @@ import java.util.List;
 @Getter
 @NoArgsConstructor
 public class PortfolioResponseDto {
+    private Double totalMoney;
     private Double balance;
     private List<WalletDto> leaders;
 
