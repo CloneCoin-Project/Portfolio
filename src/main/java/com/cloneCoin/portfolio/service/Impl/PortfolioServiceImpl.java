@@ -35,7 +35,7 @@ public class PortfolioServiceImpl implements PortfolioService {
     @Override
     public void createPortfolio(Long userId) {
         System.out.println("createPorfoilo called!");
-        Portfolio portfolio = new Portfolio(userId, 0L, 10000000.0);
+        Portfolio portfolio = new Portfolio(userId,10000000.0);
 
         System.out.println("Repository save called!");
         portfolioRepository.save(portfolio);

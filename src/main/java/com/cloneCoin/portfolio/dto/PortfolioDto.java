@@ -10,13 +10,11 @@ import java.util.List;
 @NoArgsConstructor
 public class PortfolioDto {
     private Long userId;
-    private Long portfolioProfit;
 
     private List<WalletDto> walletDtoList;
 
     public PortfolioDto(Portfolio portfolio, List<WalletDto> walletDtoList) {
         this.userId = portfolio.getUserId();
-        this.portfolioProfit = portfolio.getPortfolioProfit();
         this.walletDtoList = walletDtoList;
     }
 }

@@ -106,14 +106,14 @@ public class CopyServiceImpl implements CopyService {
     // 카피 돈 추가/축소
     @Override
     @Transactional
-    public boolean copyPut(CopyPutRequestDto copyPutRequestDto) {
+    public CopyPutResponseDto copyPut(CopyPutRequestDto copyPutRequestDto) {
         Copy copy = copyRepository.findByUserIdAndLeaderId(copyPutRequestDto.getUserId(), copyPutRequestDto.getLeaderId());
         Portfolio portfolio = portfolioRepository.findByUserId(copyPutRequestDto.getUserId());
 
         Double investAmount = copy.getTotalInvestAmout();
 
         if(copyPutRequestDto.getType().equals("withdraw") && copyPutRequestDto.getAmount() > copy.getTotalInvestAmout()){
-            return false;
+            return new CopyPutResponseDto();
         }
 
         List<Coin> coinList = coinRepository.findByCopyId(copy.getId());
@@ -257,13 +257,9 @@ public class CopyServiceImpl implements CopyService {
             if(copy.getInvestBalance() < 0 || copy.getTotalInvestAmout() <= 0){
                 copyRepository.delete(copy);
             }
-
-
         }
 
-
-
-        return true;
+        return new CopyPutResponseDto(copyPutRequestDto, copy.getLeaderName(), portfolio.getBalance());
 
     }
 
@@ -281,24 +277,27 @@ public class CopyServiceImpl implements CopyService {
         // 카피 중지를 하면 들고있던 코인은 현재가로 다 팔고 전체 돈 반환
         List<Coin> coinList = coinRepository.findByCopyId(copy.getId());
         Double totalCoin = 0.0;
-        for(int i=0; i < coinList.size(); i++){
-            Double currentPrice = bithumbOpenApi.TickerApi(coinList.get(i).getCoinName());
-            Double coinQuantity = coinList.get(i).getQuantity();
+        for (Coin coin : coinList) {
+            Double currentPrice = bithumbOpenApi.TickerApi(coin.getCoinName());
+            Double coinQuantity = coin.getQuantity();
 
             Double sellKRW = cal(coinQuantity * currentPrice);
             totalCoin += sellKRW;
 
             // 코인 삭제
-            coinRepository.delete(coinList.get(i));
+            coinRepository.delete(coin);
         }
         // 코인 판돈이랑 남은 잔액 반환
         Double returnKRW = copy.getInvestBalance() + totalCoin;
-        CopyDeleteResponseDto copyDeleteResponseDto = new CopyDeleteResponseDto(copyDeleteRequestDto.getUserId(),
-                copyDeleteRequestDto.getLeaderId(), returnKRW);
+
         portfolio.PlusBalance(returnKRW);
+
+        String leaderName = copy.getLeaderName();
 
         copyRepository.delete(copy);
 
-        return copyDeleteResponseDto;
+        return new CopyDeleteResponseDto(copyDeleteRequestDto.getUserId(),
+                copyDeleteRequestDto.getLeaderId(), leaderName, portfolio.getBalance());
+
     }
 }

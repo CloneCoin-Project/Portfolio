@@ -37,13 +37,14 @@ public class CopyController {
     }
 
     @PutMapping("/copy")
-    public ResponseEntity<String> copyPut(@RequestBody CopyPutRequestDto copyPutRequestDto){
-        boolean check = copyService.copyPut(copyPutRequestDto);
-        if(check){
-            return new ResponseEntity<>("copy 돈 추가/축소 되었습니다.", HttpStatus.OK);
+    public ResponseEntity<CopyPutResponseDto> copyPut(@RequestBody CopyPutRequestDto copyPutRequestDto){
+        CopyPutResponseDto check = copyService.copyPut(copyPutRequestDto);
+        System.out.println(check);
+        if(check.getLeaderId() != null){
+            return new ResponseEntity<>(check, HttpStatus.OK);
         }
         else{
-            return new ResponseEntity<>("실패하였습니다.", HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(check, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

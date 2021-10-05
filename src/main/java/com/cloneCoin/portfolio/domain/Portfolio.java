@@ -1,12 +1,9 @@
 package com.cloneCoin.portfolio.domain;
 
-import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import javax.persistence.*;
-import java.io.Serializable;
 
 @Getter
 @Entity
@@ -20,14 +17,11 @@ public class Portfolio{
     @Column(nullable = false, unique = true)
     private Long userId;
 
-    @Column
-    private Long portfolioProfit;
 
     private Double balance;
 
-    public Portfolio(Long userId, Long portfolioProfit, Double balance) {
+    public Portfolio(Long userId, Double balance) {
         this.userId = userId;
-        this.portfolioProfit = portfolioProfit;
         this.balance = balance;
     }
 

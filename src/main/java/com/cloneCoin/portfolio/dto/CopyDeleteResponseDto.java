@@ -1,16 +1,20 @@
 package com.cloneCoin.portfolio.dto;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
+@NoArgsConstructor
 public class CopyDeleteResponseDto {
     private Long userId;
     private Long leaderId;
-    private Double stopBalance;
+    private String leaderName;
+    private Double resultBalance;
 
-    public CopyDeleteResponseDto(Long userId, Long leaderId, Double returnKRW) {
+    public CopyDeleteResponseDto(Long userId, Long leaderId, String leaderName, Double returnKRW) {
         this.userId = userId;
         this.leaderId = leaderId;
-        this.stopBalance = returnKRW;
+        this.leaderName = leaderName;
+        this.resultBalance = returnKRW;
     }
 }
