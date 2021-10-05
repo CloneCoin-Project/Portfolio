@@ -5,17 +5,17 @@ import com.cloneCoin.portfolio.client.WalletReadServiceClient;
 import com.cloneCoin.portfolio.domain.Coin;
 import com.cloneCoin.portfolio.domain.Copy;
 import com.cloneCoin.portfolio.domain.Portfolio;
-import com.cloneCoin.portfolio.dto.CopyDeleteRequestDto;
-import com.cloneCoin.portfolio.dto.CopyPutRequestDto;
-import com.cloneCoin.portfolio.dto.CopyStartRequestDto;
+import com.cloneCoin.portfolio.dto.*;
 import com.cloneCoin.portfolio.repository.CoinRepository;
 import com.cloneCoin.portfolio.repository.CopyRepository;
 import com.cloneCoin.portfolio.repository.PortfolioRepository;
+import com.cloneCoin.portfolio.dto.CopyRatioDto;
 import com.cloneCoin.portfolio.service.CopyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -28,21 +28,67 @@ public class CopyServiceImpl implements CopyService {
     private final CoinRepository coinRepository;
     private final BithumbOpenApi bithumbOpenApi;
 
+    // 카피수 조회
+    @Override
+    public CopyAmountDto copyGet(Long leaderId) {
+        List<Copy> copy = copyRepository.findByLeaderId(leaderId);
+        return new CopyAmountDto(copy.size());
+    }
+
+    // 카피 비율
+    @Override
+    public List<CopyRatioDto> copyRatio(Long userId) {
+        List<Copy> copyList = copyRepository.findByUserId(userId);
+
+        Double copyMoney =0.0;
+
+        for(int i=0; i<copyList.size(); i++){
+            copyMoney += copyList.get(i).getTotalInvestAmout();
+        }
+
+        List<CopyRatioDto> copyRatioDtos = new ArrayList<>();
+
+        for(int i=0; i<copyList.size(); i++){
+            Double ratio = cal(copyList.get(i).getTotalInvestAmout() / copyMoney);
+            CopyRatioDto copyRatioDto = new CopyRatioDto(copyList.get(i).getLeaderId(), copyList.get(i).getLeaderName(), cal(ratio * 100));
+            copyRatioDtos.add(copyRatioDto);
+
+        }
+
+        return copyRatioDtos;
+
+
+    }
+
+    // 카피 시작
     @Override
     @Transactional
-    public void createCopy(CopyStartRequestDto copyStartRequestDto) {
+    public CopyStartResponseDto createCopy(CopyStartRequestDto copyStartRequestDto) {
 
         // 나의 포트폴리오 조회
-        System.out.println(copyStartRequestDto.getUserId());
         Portfolio portfolio = portfolioRepository.findByUserId(copyStartRequestDto.getUserId());
-        // 카피 시작
-        Copy copy = new Copy(copyStartRequestDto, portfolio);
-        copyRepository.save(copy);
 
-        // 총 금액이랑 카피할 돈 비교해서 총금액보다 크다면 카피 불가
+        Copy copyCheck = copyRepository.findByUserIdAndLeaderId(copyStartRequestDto.getUserId(), copyStartRequestDto.getLeaderId());
 
-        // 카피 후 포트폴리오 에서 금액 차감
-        Double balance = portfolio.MinusBalance(copyStartRequestDto.getAmount()); // 카피 후 잔액
+        if(portfolio.getBalance() > copyStartRequestDto.getAmount() && copyCheck == null){
+            // 카피 시작
+            Copy copy = new Copy(copyStartRequestDto, portfolio);
+            copyRepository.save(copy);
+
+
+            // 카피 후 포트폴리오 에서 금액 차감
+            Double balance = portfolio.MinusBalance(copyStartRequestDto.getAmount()); // 카피 후 잔액
+
+            return new CopyStartResponseDto(copyStartRequestDto, balance);
+        }else{
+            return new CopyStartResponseDto();
+        }
+
+
+
+
+
+
 
         // 카피 한 코인 생성
         // 페인 사용
@@ -60,17 +106,19 @@ public class CopyServiceImpl implements CopyService {
     // 카피 돈 추가/축소
     @Override
     @Transactional
-    public boolean copyPut(CopyPutRequestDto copyPutRequestDto) {
+    public CopyPutResponseDto copyPut(CopyPutRequestDto copyPutRequestDto) {
         Copy copy = copyRepository.findByUserIdAndLeaderId(copyPutRequestDto.getUserId(), copyPutRequestDto.getLeaderId());
         Portfolio portfolio = portfolioRepository.findByUserId(copyPutRequestDto.getUserId());
 
         Double investAmount = copy.getTotalInvestAmout();
 
         if(copyPutRequestDto.getType().equals("withdraw") && copyPutRequestDto.getAmount() > copy.getTotalInvestAmout()){
-            return false;
+            return new CopyPutResponseDto();
         }
 
         List<Coin> coinList = coinRepository.findByCopyId(copy.getId());
+
+        Double sellKRW = 0.0;
 
         // 투자금 변경으로 일어날일
         if(!coinList.isEmpty()){
@@ -122,13 +170,13 @@ public class CopyServiceImpl implements CopyService {
                     //현재가
                     Double currentPrice = bithumbOpenApi.TickerApi(coinName);
 
-                    // 돈 축소 비율
-                    Double sellKRW = cal(copyPutRequestDto.getAmount() * coinRatio);
+                    // 돈 축소
+                    sellKRW = cal(copyPutRequestDto.getAmount() * coinRatio);
                     System.out.println("코인 판매 할 돈 : " + sellKRW);
 
                     // 매도할 코인보다 없을 경우에는 가지고있는 코인만 팔고 코인 삭제
-                    if(sellKRW > coinAvg * coinQuantity){
-                        sellKRW = coinAvg * coinQuantity;
+                    if(sellKRW > currentPrice * coinQuantity){
+                        sellKRW = currentPrice * coinQuantity;
 
                         Double sellQuantity = sellKRW / currentPrice;
 
@@ -141,6 +189,10 @@ public class CopyServiceImpl implements CopyService {
                         // 코인 삭제
                         coinRepository.delete(coinList.get(i));
 
+                        //portfolio.PlusBalance(sellKRW);
+
+                        //copy.MinusInvest(sellKRW);
+
                         System.out.println("코인에 총 추가된 돈 : " + coinList.get(i).getQuantity() * coinList.get(i).getAvgPrice());
                     }
                     // 매도할 코인이 있을경우
@@ -151,9 +203,17 @@ public class CopyServiceImpl implements CopyService {
                         System.out.println("팔 코인 수량 : " + sellQuantity);
                         Double totalQuantity = coinList.get(i).getQuantity() - sellQuantity;
 
+
+
                         // 매도는 평단가 안바뀐다.
 
                         coinList.get(i).UpdateSellQuantity(totalQuantity);
+
+                        // 포트폴리오에 돈 추가
+                        //portfolio.PlusBalance(sellKRW);
+
+                        // 카피 돈 감소
+                        //copy.MinusInvest(sellKRW);
 
                         System.out.println("코인에 총 추가된 돈 : " + coinList.get(i).getQuantity() * coinList.get(i).getAvgPrice());
                     }
@@ -179,25 +239,34 @@ public class CopyServiceImpl implements CopyService {
         }
         else{
             // 잔액 비율만큼 잔액 뺴기
-            copy.CopyMinusBalance(cal(copyPutRequestDto.getAmount() * KRWRatio));
+            if(copy.getInvestBalance() - copyPutRequestDto.getAmount() * KRWRatio <= 0){
 
-            // 포트폴리오에 돈 들어옴
-            portfolio.PlusBalance(copyPutRequestDto.getAmount());
+                // 남은 잔액이 더 적을경우 남은 잔액만 뺀다.
+                portfolio.PlusBalance(copy.getInvestBalance() + sellKRW);
 
-            // copy에게 총 투자금 변경
-            copy.MinusInvest(copyPutRequestDto.getAmount());
+
+            }else{
+                copy.CopyMinusBalance(cal(copyPutRequestDto.getAmount() * KRWRatio));
+                // 포트폴리오에 돈 들어옴
+                portfolio.PlusBalance(copyPutRequestDto.getAmount());
+
+                // copy에게 총 투자금 변경
+                copy.MinusInvest(copyPutRequestDto.getAmount());
+            }
+
+            if(copy.getInvestBalance() < 0 || copy.getTotalInvestAmout() <= 0){
+                copyRepository.delete(copy);
+            }
         }
 
-
-
-        return true;
+        return new CopyPutResponseDto(copyPutRequestDto, copy.getLeaderName(), portfolio.getBalance());
 
     }
 
     // 카피중지
     @Override
     @Transactional
-    public void copyDelete(CopyDeleteRequestDto copyDeleteRequestDto) {
+    public CopyDeleteResponseDto copyDelete(CopyDeleteRequestDto copyDeleteRequestDto) {
         Copy copy = copyRepository.findByUserIdAndLeaderId(copyDeleteRequestDto.getUserId(),
                 copyDeleteRequestDto.getLeaderId());
 
@@ -208,20 +277,27 @@ public class CopyServiceImpl implements CopyService {
         // 카피 중지를 하면 들고있던 코인은 현재가로 다 팔고 전체 돈 반환
         List<Coin> coinList = coinRepository.findByCopyId(copy.getId());
         Double totalCoin = 0.0;
-        for(int i=0; i < coinList.size(); i++){
-            Double currentPrice = bithumbOpenApi.TickerApi(coinList.get(i).getCoinName());
-            Double coinQuantity = coinList.get(i).getQuantity();
+        for (Coin coin : coinList) {
+            Double currentPrice = bithumbOpenApi.TickerApi(coin.getCoinName());
+            Double coinQuantity = coin.getQuantity();
 
             Double sellKRW = cal(coinQuantity * currentPrice);
             totalCoin += sellKRW;
 
             // 코인 삭제
-            coinRepository.delete(coinList.get(i));
+            coinRepository.delete(coin);
         }
         // 코인 판돈이랑 남은 잔액 반환
         Double returnKRW = copy.getInvestBalance() + totalCoin;
+
         portfolio.PlusBalance(returnKRW);
 
+        String leaderName = copy.getLeaderName();
+
         copyRepository.delete(copy);
+
+        return new CopyDeleteResponseDto(copyDeleteRequestDto.getUserId(),
+                copyDeleteRequestDto.getLeaderId(), leaderName, portfolio.getBalance());
+
     }
 }

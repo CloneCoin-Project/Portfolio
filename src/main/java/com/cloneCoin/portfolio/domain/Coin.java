@@ -19,7 +19,7 @@ public class Coin {
     private Double avgPrice;
     private Double quantity;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "COPY_ID")
     private Copy copy;
 

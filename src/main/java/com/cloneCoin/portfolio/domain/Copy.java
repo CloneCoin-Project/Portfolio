@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
-import java.util.Date;
 
 @Entity
 @Getter
@@ -16,6 +15,7 @@ public class Copy {
     private Long id;
     private Long userId;
     private Long leaderId;
+    private String leaderName;
     //private Date registerDate;
     private Double totalInvestAmout;
     private Double InvestBalance;
@@ -28,6 +28,7 @@ public class Copy {
     public Copy(CopyStartRequestDto copyStartRequestDto, Portfolio portfolio) {
         this.userId = copyStartRequestDto.getUserId();
         this.leaderId = copyStartRequestDto.getLeaderId();
+        this.leaderName = copyStartRequestDto.getLeaderName();
         this.totalInvestAmout = copyStartRequestDto.getAmount();
         this.InvestBalance = copyStartRequestDto.getAmount();
         this.portfolio = portfolio;
