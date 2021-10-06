@@ -84,7 +84,7 @@ eureka:
   instance:
     instance-id: ${spring.cloud.client.hostname}:${spring.application.instance_id:${server.port}}
     prefer-ip-address: true
-    ip-address: 3.38.42.25 # ec2 specific server public address(user)
+    ip-address: 3.38.44.86 # ec2 specific server public address(user)
 
   client:
     registerWithEureka: true
