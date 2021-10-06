@@ -3,7 +3,6 @@ package com.cloneCoin.portfolio.controller;
 import com.cloneCoin.portfolio.dto.CoinRequestDto;
 import com.cloneCoin.portfolio.dto.CoinResponseDto;
 import com.cloneCoin.portfolio.service.CoinService;
-import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,7 +19,6 @@ public class CoinController {
     private final CoinService coinService;
 
     @PostMapping("/coin")
-    @ApiOperation(value = "Test Sample", tags = "sample")
     public List<CoinResponseDto> coinReturn(@RequestBody CoinRequestDto coinRequestDto){
         return coinService.coinReturn(coinRequestDto);
 

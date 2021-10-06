@@ -2,7 +2,6 @@ package com.cloneCoin.portfolio.controller;
 
 import com.cloneCoin.portfolio.dto.PortfolioResponseDto;
 import com.cloneCoin.portfolio.service.PortfolioService;
-import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,7 +18,6 @@ public class PortfolioController {
 
 
     @GetMapping("/welcome")
-    @ApiOperation(value="hello, World API", notes="hello, World를 반환하는 API, Ajax 통신 확인용.")
     public String welcome() {
         return "portfolio welcome test";
     }
