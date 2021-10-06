@@ -1,6 +1,5 @@
 server:
   port: 8002 # Random Port : 0
-  servlet-path: /loop-service
 
 spring:
   config:
@@ -30,6 +29,8 @@ eureka:
       defaultZone: http://${eureka.instance.hostname}:8761/eureka/ # 서버가 가진 위치값
 
 ---
+server:
+  port: 8002 # Random Port : 0
 
 spring:
   config:
@@ -59,6 +60,8 @@ eureka:
       defaultZone: http://${eureka.instance.hostname}:8761/eureka/ # 서버가 가진 위치값
 
 ---
+server:
+  port: 8002 # Random Port : 0
 
 spring:
   config:
