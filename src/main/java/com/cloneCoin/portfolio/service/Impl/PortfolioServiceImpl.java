@@ -80,6 +80,8 @@ public class PortfolioServiceImpl implements PortfolioService {
     }
 
     // analysis 매수, 매도 이벤트 발생시
+    // 매수, 매도 마이너스 예외처리
+    // 매수할때 카피잔액이 없으면 매수안되게
     @Override
     @Transactional
     public void UpdatePortfolio(BuySellDto buySellDto) {
@@ -189,22 +191,51 @@ public class PortfolioServiceImpl implements PortfolioService {
                                 // 구매할 돈 (ex resultRatio가 10퍼 라면 현재 총 투자금액에서 코인 10퍼만큼 더사면 되는건가?)
                                 Double buyKRW = cal(copy.getTotalInvestAmout() * resultRatio);
 
-                                // 소수점으로 계산하더라도 나머지가 있을 수 있는데 어떻게하지? => 코인을 사고 팔기만해도 돈이 달라질 수 있다.
-                                Double buyQuantity = buyKRW / currentPrice;// (현재가);
+                                // 카피 잔액보다 살 돈이 더 크다면 남은 잔액만큼만 산다.
+                                if(copy.getInvestBalance() - buyKRW < 0){
+                                    buyKRW = copy.getInvestBalance();
+
+                                    // 소수점으로 계산하더라도 나머지가 있을 수 있는데 어떻게하지? => 코인을 사고 팔기만해도 돈이 달라질 수 있다.
+                                    Double buyQuantity = buyKRW / currentPrice;// (현재가);
+
+                                    // 코인 생성
+                                    // 코인 처음살때는 현재가가 평단가 이다.
+                                    Coin newCoin = new Coin(userList.get(j), buySellDto.getLeaderId(), coinName, buyQuantity, currentPrice, copy);
+
+                                    // 코인저장
+                                    coinRepository.save(newCoin);
+
+                                    // 코인 샀으면 balance에서 빼줘야함 => copy 투자금액에서 뻄
+
+                                    copy.CopyMinusBalance(buyKRW);
+                                    //portfolio.MinusBalance(buyKRW);
+                                }
+                                else if(copy.getInvestBalance() == 0){
+                                    // 잔액이 0원이라면 할게 없음
+                                }
+                                else{
+                                    // 소수점으로 계산하더라도 나머지가 있을 수 있는데 어떻게하지? => 코인을 사고 팔기만해도 돈이 달라질 수 있다.
+                                    Double buyQuantity = buyKRW / currentPrice;// (현재가);
 
 
-                                // 코인 생성
-                                // 코인 처음살때는 현재가가 평단가 이다.
-                                Coin newCoin = new Coin(userList.get(j), buySellDto.getLeaderId(), coinName, buyQuantity, currentPrice, copy);
+                                    // 코인 생성
+                                    // 코인 처음살때는 현재가가 평단가 이다.
+                                    Coin newCoin = new Coin(userList.get(j), buySellDto.getLeaderId(), coinName, buyQuantity, currentPrice, copy);
 
-                                // 코인저장
-                                coinRepository.save(newCoin);
+                                    // 코인저장
+                                    coinRepository.save(newCoin);
 
-                                // 코인 샀으면 balance에서 빼줘야함 => copy 투자금액에서 뻄
-                                copy.CopyMinusBalance(buyKRW);
-                                //portfolio.MinusBalance(buyKRW);
+                                    // 코인 샀으면 balance에서 빼줘야함 => copy 투자금액에서 뻄
+
+                                    copy.CopyMinusBalance(buyKRW);
+                                    //portfolio.MinusBalance(buyKRW);
+                                }
+
+
                             }
                             // 코인이 존재한다면
+                            // 코인이 존재할떄는 잔액보다 큰돈은 아예 안사도록 했는데
+                            // 어떻게 마이너스가 뜬거지?
                             else{
 
                                 Portfolio portfolio = portfolioRepository.findByUserId(userList.get(j));
