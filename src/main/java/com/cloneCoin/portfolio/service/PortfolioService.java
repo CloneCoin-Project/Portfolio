@@ -2,6 +2,7 @@ package com.cloneCoin.portfolio.service;
 
 import com.cloneCoin.portfolio.dto.BuySellDto;
 import com.cloneCoin.portfolio.dto.PortfolioResponseDto;
+import com.cloneCoin.portfolio.dto.UserPeriodDto;
 
 public interface PortfolioService {
 
@@ -11,4 +12,6 @@ public interface PortfolioService {
     PortfolioResponseDto getPortfolioByUserId(Long userId);
 
     void UpdatePortfolio(BuySellDto buySellDto);
+
+    UserPeriodDto getUserPeriod(Long userId, Long period);
 }

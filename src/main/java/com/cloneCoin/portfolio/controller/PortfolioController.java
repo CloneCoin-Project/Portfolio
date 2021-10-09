@@ -1,12 +1,10 @@
 package com.cloneCoin.portfolio.controller;
 
 import com.cloneCoin.portfolio.dto.PortfolioResponseDto;
+import com.cloneCoin.portfolio.dto.UserPeriodDto;
 import com.cloneCoin.portfolio.service.PortfolioService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -34,6 +32,13 @@ public class PortfolioController {
 
         //ResponsePortfolio responsePortfolio = new ModelMapper().map(portfolioDto, ResponsePortfolio.class);
 
+    }
+
+    // 특정 유저의 기간별 수익률 가져오기
+    @GetMapping("/user")
+    public UserPeriodDto getLeaderPeriod(@RequestParam(value = "userId") Long leaderId,
+                                         @RequestParam(value = "period") Long period) {
+        return portfolioService.getUserPeriod(leaderId, period);
     }
 
 
