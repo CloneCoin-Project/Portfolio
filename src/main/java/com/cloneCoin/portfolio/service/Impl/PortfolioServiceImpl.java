@@ -4,8 +4,8 @@ import com.cloneCoin.portfolio.client.BithumbOpenApi;
 import com.cloneCoin.portfolio.client.WalletReadServiceClient;
 import com.cloneCoin.portfolio.domain.Coin;
 import com.cloneCoin.portfolio.domain.Copy;
-import com.cloneCoin.portfolio.dto.*;
 import com.cloneCoin.portfolio.domain.Portfolio;
+import com.cloneCoin.portfolio.dto.*;
 import com.cloneCoin.portfolio.repository.CoinRepository;
 import com.cloneCoin.portfolio.repository.CopyRepository;
 import com.cloneCoin.portfolio.repository.PortfolioRepository;
@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -304,4 +305,70 @@ public class PortfolioServiceImpl implements PortfolioService {
 
         // 포트폴리오 총 수익률 변경
     }
+
+    // 리더의 (1, 7, 30) 기간별 수익률 제공
+    public UserPeriodDto getUserPeriod(Long userId, Long period) {
+
+        UserPeriodDto userPeriodDTO = new UserPeriodDto();
+        userPeriodDTO.setUserId(userId);
+
+        List<UserPeriodContent> userPeriodContentList = new ArrayList<>();
+
+
+        Portfolio portfolio = portfolioRepository.findByUserId(userId);
+
+        portfolio.getProfits().stream().forEach(profit -> {
+            UserPeriodContent leaderPeriodContent = new UserPeriodContent();
+            leaderPeriodContent.setProfit(profit.getProfit());
+            leaderPeriodContent.setLocalDate(profit.getLocalDate());
+            userPeriodContentList.add(leaderPeriodContent);
+        });
+
+
+
+        if (period == 1) {
+            userPeriodDTO.setUserPeriodContentList(userPeriodContentList);
+        }
+        if (period == 7) {
+            List<UserPeriodContent> leaderPeriodContentList_7 = getLeaderPeriodContentList(userPeriodContentList, 7);
+            userPeriodDTO.setUserPeriodContentList(leaderPeriodContentList_7);
+        }
+        if (period == 30) {
+            List<UserPeriodContent> leaderPeriodContentList_30 = getLeaderPeriodContentList(userPeriodContentList, 30);
+            userPeriodDTO.setUserPeriodContentList(leaderPeriodContentList_30);
+        }
+
+        return userPeriodDTO;
+    }
+
+    // 1일 기준 수익률 -> 원하는 기간별 수익률
+    public List<UserPeriodContent> getLeaderPeriodContentList(List<UserPeriodContent> leaderPeriodContentList, long period) {
+        List<UserPeriodContent> leaderPeriodContentList2 = new ArrayList<>();
+        int count = 0;
+        double sum = 0;
+        for (UserPeriodContent leaderPeriodContent : leaderPeriodContentList) {
+            sum += leaderPeriodContent.getProfit();
+            count++;
+            if (count == period) {
+                UserPeriodContent leaderPeriodContent2 = new UserPeriodContent();
+                leaderPeriodContent2.setProfit(sum / 7);
+                leaderPeriodContent2.setLocalDate(leaderPeriodContent.getLocalDate());
+                leaderPeriodContentList2.add(leaderPeriodContent2);
+
+                sum=0;
+                count=0;
+            }
+        }
+        if (count != 0) {
+            UserPeriodContent leaderPeriodContent2 = new UserPeriodContent();
+            leaderPeriodContent2.setProfit(sum / count);
+            leaderPeriodContent2.setLocalDate(LocalDate.now());
+            leaderPeriodContentList2.add(leaderPeriodContent2);
+        }
+
+        leaderPeriodContentList2.stream().forEach(leaderPeriodContent -> System.out.println(leaderPeriodContent.toString()));
+        System.out.println("\n\n");
+        return leaderPeriodContentList2;
+    }
+
 }
