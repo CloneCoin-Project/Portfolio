@@ -4,8 +4,8 @@ import com.cloneCoin.portfolio.client.BithumbOpenApi;
 import com.cloneCoin.portfolio.client.WalletReadServiceClient;
 import com.cloneCoin.portfolio.domain.Coin;
 import com.cloneCoin.portfolio.domain.Copy;
-import com.cloneCoin.portfolio.dto.*;
 import com.cloneCoin.portfolio.domain.Portfolio;
+import com.cloneCoin.portfolio.dto.*;
 import com.cloneCoin.portfolio.repository.CoinRepository;
 import com.cloneCoin.portfolio.repository.CopyRepository;
 import com.cloneCoin.portfolio.repository.PortfolioRepository;
@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -80,6 +81,8 @@ public class PortfolioServiceImpl implements PortfolioService {
     }
 
     // analysis 매수, 매도 이벤트 발생시
+    // 매수, 매도 마이너스 예외처리
+    // 매수할때 카피잔액이 없으면 매수안되게
     @Override
     @Transactional
     public void UpdatePortfolio(BuySellDto buySellDto) {
@@ -189,22 +192,51 @@ public class PortfolioServiceImpl implements PortfolioService {
                                 // 구매할 돈 (ex resultRatio가 10퍼 라면 현재 총 투자금액에서 코인 10퍼만큼 더사면 되는건가?)
                                 Double buyKRW = cal(copy.getTotalInvestAmout() * resultRatio);
 
-                                // 소수점으로 계산하더라도 나머지가 있을 수 있는데 어떻게하지? => 코인을 사고 팔기만해도 돈이 달라질 수 있다.
-                                Double buyQuantity = buyKRW / currentPrice;// (현재가);
+                                // 카피 잔액보다 살 돈이 더 크다면 남은 잔액만큼만 산다.
+                                if(copy.getInvestBalance() - buyKRW < 0){
+                                    buyKRW = copy.getInvestBalance();
+
+                                    // 소수점으로 계산하더라도 나머지가 있을 수 있는데 어떻게하지? => 코인을 사고 팔기만해도 돈이 달라질 수 있다.
+                                    Double buyQuantity = buyKRW / currentPrice;// (현재가);
+
+                                    // 코인 생성
+                                    // 코인 처음살때는 현재가가 평단가 이다.
+                                    Coin newCoin = new Coin(userList.get(j), buySellDto.getLeaderId(), coinName, buyQuantity, currentPrice, copy);
+
+                                    // 코인저장
+                                    coinRepository.save(newCoin);
+
+                                    // 코인 샀으면 balance에서 빼줘야함 => copy 투자금액에서 뻄
+
+                                    copy.CopyMinusBalance(buyKRW);
+                                    //portfolio.MinusBalance(buyKRW);
+                                }
+                                else if(copy.getInvestBalance() == 0){
+                                    // 잔액이 0원이라면 할게 없음
+                                }
+                                else{
+                                    // 소수점으로 계산하더라도 나머지가 있을 수 있는데 어떻게하지? => 코인을 사고 팔기만해도 돈이 달라질 수 있다.
+                                    Double buyQuantity = buyKRW / currentPrice;// (현재가);
 
 
-                                // 코인 생성
-                                // 코인 처음살때는 현재가가 평단가 이다.
-                                Coin newCoin = new Coin(userList.get(j), buySellDto.getLeaderId(), coinName, buyQuantity, currentPrice, copy);
+                                    // 코인 생성
+                                    // 코인 처음살때는 현재가가 평단가 이다.
+                                    Coin newCoin = new Coin(userList.get(j), buySellDto.getLeaderId(), coinName, buyQuantity, currentPrice, copy);
 
-                                // 코인저장
-                                coinRepository.save(newCoin);
+                                    // 코인저장
+                                    coinRepository.save(newCoin);
 
-                                // 코인 샀으면 balance에서 빼줘야함 => copy 투자금액에서 뻄
-                                copy.CopyMinusBalance(buyKRW);
-                                //portfolio.MinusBalance(buyKRW);
+                                    // 코인 샀으면 balance에서 빼줘야함 => copy 투자금액에서 뻄
+
+                                    copy.CopyMinusBalance(buyKRW);
+                                    //portfolio.MinusBalance(buyKRW);
+                                }
+
+
                             }
                             // 코인이 존재한다면
+                            // 코인이 존재할떄는 잔액보다 큰돈은 아예 안사도록 했는데
+                            // 어떻게 마이너스가 뜬거지?
                             else{
 
                                 Portfolio portfolio = portfolioRepository.findByUserId(userList.get(j));
@@ -273,4 +305,70 @@ public class PortfolioServiceImpl implements PortfolioService {
 
         // 포트폴리오 총 수익률 변경
     }
+
+    // 리더의 (1, 7, 30) 기간별 수익률 제공
+    public UserPeriodDto getUserPeriod(Long userId, Long period) {
+
+        UserPeriodDto userPeriodDTO = new UserPeriodDto();
+        userPeriodDTO.setUserId(userId);
+
+        List<UserPeriodContent> userPeriodContentList = new ArrayList<>();
+
+
+        Portfolio portfolio = portfolioRepository.findByUserId(userId);
+
+        portfolio.getProfits().stream().forEach(profit -> {
+            UserPeriodContent leaderPeriodContent = new UserPeriodContent();
+            leaderPeriodContent.setProfit(profit.getProfit());
+            leaderPeriodContent.setLocalDate(profit.getLocalDate());
+            userPeriodContentList.add(leaderPeriodContent);
+        });
+
+
+
+        if (period == 1) {
+            userPeriodDTO.setUserPeriodContentList(userPeriodContentList);
+        }
+        if (period == 7) {
+            List<UserPeriodContent> leaderPeriodContentList_7 = getLeaderPeriodContentList(userPeriodContentList, 7);
+            userPeriodDTO.setUserPeriodContentList(leaderPeriodContentList_7);
+        }
+        if (period == 30) {
+            List<UserPeriodContent> leaderPeriodContentList_30 = getLeaderPeriodContentList(userPeriodContentList, 30);
+            userPeriodDTO.setUserPeriodContentList(leaderPeriodContentList_30);
+        }
+
+        return userPeriodDTO;
+    }
+
+    // 1일 기준 수익률 -> 원하는 기간별 수익률
+    public List<UserPeriodContent> getLeaderPeriodContentList(List<UserPeriodContent> leaderPeriodContentList, long period) {
+        List<UserPeriodContent> leaderPeriodContentList2 = new ArrayList<>();
+        int count = 0;
+        double sum = 0;
+        for (UserPeriodContent leaderPeriodContent : leaderPeriodContentList) {
+            sum += leaderPeriodContent.getProfit();
+            count++;
+            if (count == period) {
+                UserPeriodContent leaderPeriodContent2 = new UserPeriodContent();
+                leaderPeriodContent2.setProfit(sum / 7);
+                leaderPeriodContent2.setLocalDate(leaderPeriodContent.getLocalDate());
+                leaderPeriodContentList2.add(leaderPeriodContent2);
+
+                sum=0;
+                count=0;
+            }
+        }
+        if (count != 0) {
+            UserPeriodContent leaderPeriodContent2 = new UserPeriodContent();
+            leaderPeriodContent2.setProfit(sum / count);
+            leaderPeriodContent2.setLocalDate(LocalDate.now());
+            leaderPeriodContentList2.add(leaderPeriodContent2);
+        }
+
+        leaderPeriodContentList2.stream().forEach(leaderPeriodContent -> System.out.println(leaderPeriodContent.toString()));
+        System.out.println("\n\n");
+        return leaderPeriodContentList2;
+    }
+
 }
